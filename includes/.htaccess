@@ -1,0 +1,7 @@
+# Denegar el acceso directo a los archivos dentro de /includes
+Deny from all
+
+# Permitir el acceso solo si la solicitud proviene de PHP
+<FilesMatch "\.(php)$">
+    Allow from all
+</FilesMatch>

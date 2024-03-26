@@ -4,24 +4,20 @@
 /.idea/
 /.vscode/
 
+# Archivos permitidos
+!/**/*.htaccess
+
+
 # Archivos de compilación y dependencias
 *.log
 *.sqlite
-npm-debug.log
-yarn-debug.log
-yarn-error.log
 *.swp
 .DS_Store
 Thumbs.db
 
-# Entornos y configuraciones específicas
-.env
-.env.local
-.env.*.local
-.env.build
-.env.development
-.env.test
-.env.production
+# Ignorar todos los archivos .env, excepto .env.example
+.env*
+!.env.example
 
 # Archivos de respaldo y temporales
 *~
@@ -37,4 +33,6 @@ dist/
 build/
 coverage/
 .cache/
-.htaccess
+
+# Archivos ignorados específicamente
+/.htaccess

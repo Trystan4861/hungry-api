@@ -1,153 +1,74 @@
 <?php
-	require_once "includes/config/config.inc.php";
-	require_once "includes/php/phploader.inc.php";
-	define('json_error',"Petición no encontrada o método erróneo");
-	define('user_error',"Usuario o contraseña incorrectos");
-	define('email_error',"El correo electrónico ya registrado, use otro o inicie sesión");
-	define('token_error',"Token incorrecto");
-	define('login_error',"Faltan datos");
+	//definimos la constante ROOT
+	define('DS', DIRECTORY_SEPARATOR);
+	define('ROOT', __DIR__.DS);
+	//definimos la constante API_VERSION
+	define('API_VERSION',"Hungry! API v1.0");
 
+	//lanzamos el cargador de configuraciones, clases y funciones
+	require_once ROOT."includes/loader.inc.php";
 
+	//definimos los mensajes de error para mostrar en el json
+	$msgerrors=array(
+		"json_error"=>"Petición no encontrada o método erróneo",
+		"user_error"=>"Usuario o contraseña incorrectos",
+		"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión",
+		"token_error"=>"Token incorrecto",
+		"login_error"=>"Faltan datos"
+	);
+
+	//obtenemos la accion a realizar, que es la variable GET "action" generada en el .htaccess
 	$action=$_GET["action"];
+	//inicializamos el json
 	$json["result"]="";
+	//parseamos la variable $_SERVER para eliminar el prefijo "redirect_" generado por el mod_rewrite de .htaccess
 	$_MySERVER=removePrefix("redirect_",$_SERVER);
-	if ($action!="404"){
-		$data=array_change_key_case(${"_{$_MySERVER['REQUEST_METHOD']}"}, CASE_LOWER);
+	//obtenemos el metodo de la peticion
+	$method=$_MySERVER["REQUEST_METHOD"];
+	//obtenemos los datos de la peticion con los nombres de los campos en minuscula
+	$data=array_change_key_case(${"_$method"}, CASE_LOWER);
+	//pasamos a minuscula el metodo de la peticion para usarlo en el nombre del archivo de accion a ejecutar
+	$method=strtolower($method);
+	//obtenemos el nombre del archivo de accion a ejecutar
+	$FTO="includes/actions/$method/$action.inc.php";
+	//si el archivo de accion existe, ejecutamos la accion correspondiente, sino mostramos el mensaje de error
+	if (file_exists($FTO))
+	{
+		//si la accion no es ni login ni register
+		if($action!="login" && $action!="register")
+		{
+			//tratamos de obtener el usuario a partir del token
+			require_once "includes/actions/get/getIdUsuario.inc.php";
+		}
+		//si no hay error al obtener el id_usuario
+		if (!isset($json["error_msg"]))
+		{
+			//ejecutamos la accion correspondiente
+			require_once "includes/actions/$method/$action.inc.php";
+		}
 	}
-	else {
-		$json["error_msg"] = json_error;
+	else
+	{
+		//si no existe el archivo de accion, establecemos el mensaje de error en el json
+		$json["error_msg"] = $msgerrors["json_error"];
 	}
-	switch ($action) {
-		case 'login':
-			if (!isset($data['email']) || !isset($data["pass"]))
-			{
-				$json["error_msg"] = login_error;
-			}
-			else {
-				$sql="SELECT * FROM usuarios WHERE email=:email and pass=:pass";
-				$consulta=$DAO->prepare($sql);
-				$consulta->bindValue(":email",$data["email"]);
-				$consulta->bindValue(":pass", $data["pass"]);
-				$consulta->execute();
-				$resultado=$consulta->fetch(PDO::FETCH_ASSOC);
-				if ($resultado)
-				{
-					$id_usuario = $resultado["id"];
-					$json["token"] = $resultado["token"];
-					$token = generate_token($resultado["pass"]);
-					if ($resultado["token"]!=$token)
-					{
-						$sql="UPDATE usuarios SET token=:token WHERE id=:id";
-						$consulta=$DAO->prepare($sql);
-						$consulta->bindValue(":token", $token);
-						$consulta->bindValue(":id", $id_usuario);
-						$consulta->execute();
-						$json["token"] = $token;
-					}
-				}
-				else {
-					$json["error_msg"] = user_error;
-				}
-			}
-		break;
-		case 'register':
-			if (!isset($data['email']) || !isset($data["pass"]))
-			{
-				$json["error_msg"] = login_error;
-			}
-			else {
-				//insertar nuevo usuario en la tabla usuarios con el email y pass y generar un token aleatorio y guardarlo en la tabla usuarios controlando posibles errores 
-				$sql="SELECT * FROM usuarios WHERE email=:email";
-				$consulta=$DAO->prepare($sql);
-				$consulta->bindValue(":email", $data["email"]);
-				$consulta->execute();
-				$resultado=$consulta->fetch(PDO::FETCH_ASSOC);
-				if ($resultado)
-				{
-					$json["error_msg"] = email_error;
-				}
-				else {
-					$token = generate_token($data["pass"]);
-					$sql="INSERT INTO usuarios (email, pass, token) VALUES (:email, :pass, :token)";
-					$consulta=$DAO->prepare($sql);
-					$consulta->bindValue(":email", $data["email"]);
-					$consulta->bindValue(":pass", $data["pass"]);
-					$consulta->bindValue(":token", $token);
-					$consulta->execute();
-					$json["token"] = $token;
-				}
-			}
-		break;
-		default:
-			//comprobar si el bearer token está definido en la tabla de usuarios y obtener el id de usuario de dicho token
-			$token=null;
-			if (isset($_MySERVER['HTTP_AUTHORIZATION']) && strpos($_MySERVER['HTTP_AUTHORIZATION'], 'Bearer ') === 0){
-			    $token = substr($_MySERVER['HTTP_AUTHORIZATION'], 7);
-			}elseif (isset($_MySERVER['HTTP_TOKEN'])) {
-				$token=$_MySERVER['HTTP_TOKEN'];
-			}elseif (isset($data["token"])) {
-				$token=$data["token"];
-			}
-			if (!is_null($token))
-			{
-				$sql="SELECT * FROM usuarios WHERE token=:token";
-				$consulta=$DAO->prepare($sql);
-				$consulta->bindValue(":token", $token);
-				$consulta->execute();
-				$resultado=$consulta->fetch(PDO::FETCH_ASSOC);
-				if ($resultado)
-				{
-					$id_usuario = $resultado["id"];
-					//hacer switch para los distintos valores de $action: getAll, create, update, delete, read
-					$json["action"]=$action;
-					switch ($action) {
-						case 'logout':
-							//$json = logout_json();
-						break;
-						case 'getAll':
-							$json["data"]=$resultado;
-							break;
-						case 'create':
-							//$json = create_json();
-							break;
-						case 'update':
-							//$json = update_json();
-							break;
-						case 'delete':
-							//$json = delete_json();
-							break;
-						case 'read':
-							//$json = read_json();
-							break;
-						default:
-							$json["error_msg"] = json_error;
-							break;
-					}
-				}
-				else {
-					$json["error_msg"] = token_error;
-				}
-			}
-			else{
-				$json["error_msg"] = token_error;
-			}
-			
-		break;
-	}
+	
+	//si no hay error, establecemos el resultado en true, sino en false
 	$json["result"]=!isset($json["error_msg"]);
+	//codificamos el json para mostrarlo en el navegador
 	$json = json_encode($json);
-	// Establecer la cabecera de acceso permitido a la API
+	// Establecemos los encabezados de la respuesta HTTP a la API
 	header('Content-Type: application/json');
-	header('Access-Control-Allow-Origin: *');
-	header('Access-Control-Allow-Methods: GET, POST');
-	header('Access-Control-Allow-Headers: Content-Type');
-	header('Access-Control-Allow-Credentials: true');
+	header('Access-Control-Allow-Origin: *'); // * para permitir cualquier origen.
+	header('Access-Control-Allow-Methods: GET, POST'); 
+	header('Access-Control-Allow-Headers: Content-Type'); 
+	header('Access-Control-Allow-Credentials: true'); // true para permitir credenciales de usuario.
 	header('Access-Control-Max-Age: 86400'); // 24 horas
-	header('Access-Control-Expose-Headers: Content-Length, X-JSON');
-	header('Content-Length: ' . strlen($json));
-	header('X-JSON: ' . $json);
-	header('X-PHP: ' . phpversion());
-	//header('X-API: ' . API_VERSION);
-	header('X-OS: ' . php_uname());
+	header('Access-Control-Expose-Headers: Content-Length, X-JSON, X-PHP, X-API, X-OS'); // Exponer los encabezados de la respuesta HTTP a la API.
+	header('Content-Length: ' . strlen($json));// longitud del JSON.
+	header('X-JSON: ' . $json); // JSON de la respuesta HTTP.
+	header('X-PHP: ' . phpversion()); // Versión de PHP.
+	header('X-API: ' . API_VERSION); // Versión de la API.
+	header('X-OS: ' . php_uname()); // Sistema operativo.
 
 	echo $json;
