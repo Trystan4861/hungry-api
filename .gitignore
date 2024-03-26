@@ -1,0 +1,40 @@
+# Archivos y directorios generados automáticamente
+/node_modules/
+/vendor/
+/.idea/
+/.vscode/
+
+# Archivos de compilación y dependencias
+*.log
+*.sqlite
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+*.swp
+.DS_Store
+Thumbs.db
+
+# Entornos y configuraciones específicas
+.env
+.env.local
+.env.*.local
+.env.build
+.env.development
+.env.test
+.env.production
+
+# Archivos de respaldo y temporales
+*~
+*.bak
+*.backup
+*.tmp
+*.tmp.*
+*.swp
+*.ignore
+
+# Otros archivos y directorios específicos del proyecto
+dist/
+build/
+coverage/
+.cache/
+.htaccess

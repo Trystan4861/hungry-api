@@ -1,0 +1,67 @@
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Headers "Authorization, Content-Type"
+    Header set Access-Control-Allow-Methods "GET, POST"
+</IfModule>
+
+RewriteEngine On
+RewriteBase /
+
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Devolver un código de respuesta 404 para cualquier intento de acceso directo al archivo .env
+RewriteRule ^\.env$ - [R=404,L]
+
+# Sets the HTTP_AUTHORIZATION header removed by Apache
+#RewriteCond %{ENV:REDIRECT_HTTP_AUTHORIZATION} =""
+RewriteCond %{HTTP:Authorization} .+
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+
+# Redireccionar la petición de /login a index.php?action=login
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^login$ index.php?action=login [L]
+
+# Redireccionar la petición de /register a index.php?action=register
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^register$ index.php?action=register [L]
+
+# Redireccionar la petición de /logout a index.php?action=logout
+RewriteCond %{REQUEST_METHOD} =GET
+RewriteRule ^logout$ index.php?action=logout [L]
+
+# Redireccionar la petición de /verify/TOKEN a index.php?action=verify&token=TOKEN
+RewriteCond %{REQUEST_METHOD} =GET
+RewriteRule ^verify/(.*)$ index.php?action=verify&token=$1 [L]
+
+# Redireccionar la petición de /getAll a index.php?action=getAll
+RewriteCond %{REQUEST_METHOD} =GET
+RewriteRule ^getAll$ index.php?action=getAll [L]
+
+# Redireccionar la petición de /create a index.php?action=create
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^create$ index.php?action=create [L]
+
+# Redireccionar la petición de /create/WHAT a index.php?action=create&entity=WHAT
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^create/(.*)$ index.php?action=create&entity=$1 [L]
+
+# Redireccionar la petición de /read/ID a index.php?action=read&id=ID
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^read/(.*)$ index.php?action=read&id=$1 [L]
+
+# Redireccionar la petición de /update/ID a index.php?action=update&id=ID
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^update/(.*)$ index.php?action=update&id=$1 [L]
+
+# Redireccionar la petición de /delete/ID a index.php?action=delete&id=ID
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteRule ^delete/(.*)$ index.php?action=delete&id=$1 [L]
+
+# Redireccionar cualquier otra solicitud a index.php?action=404
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?action=404
+
