@@ -12,17 +12,23 @@
     $resultado=$consulta->fetch(PDO::FETCH_ASSOC);
     if ($resultado)
     {
-      $id_usuario = $resultado["id"];
-      $json["token"] = $resultado["token"];
-      $token = generate_token($resultado["pass"]);
-      if ($resultado["token"]!=$token)
+      if ($resultado["verified"] || !MUST_VALIDATE)
       {
-        $sql="UPDATE usuarios SET token=:token WHERE id=:id";
-        $consulta=$DAO->prepare($sql);
-        $consulta->bindValue(":token", $token);
-        $consulta->bindValue(":id", $id_usuario);
-        $consulta->execute();
-        $json["token"] = $token;
+        $id_usuario = $resultado["id"];
+        $json["token"] = $resultado["token"];
+        $token = generate_token($resultado["pass"]);
+        if ($resultado["token"]!=$token)
+        {
+          $sql="UPDATE usuarios SET token=:token WHERE id=:id";
+          $consulta=$DAO->prepare($sql);
+          $consulta->bindValue(":token", $token);
+          $consulta->bindValue(":id", $id_usuario);
+          $consulta->execute();
+          $json["token"] = $token;
+        }
+      }
+      else {
+        $json["error_msg"] = $msgerrors["verified_error"];
       }
     }
     else {

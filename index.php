@@ -2,9 +2,10 @@
 	//definimos la constante ROOT
 	define('DS', DIRECTORY_SEPARATOR);
 	define('ROOT', __DIR__.DS);
-	//definimos la constante API_VERSION
-	define('API_VERSION',"Hungry! API v1.0");
-
+	//definimos la constante API_VERSION_NUMBER
+	define('API_VERSION_NUMBER', "1.0");
+	//definimos la constante MUST_VALIDATE que controlará si se obligará a validar los correos electrónicos de los usuarios
+	define('MUST_VALIDATE',false);
 	//lanzamos el cargador de configuraciones, clases y funciones
 	require_once ROOT."includes/loader.inc.php";
 
@@ -14,12 +15,14 @@
 		"user_error"=>"Usuario o contraseña incorrectos",
 		"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión",
 		"token_error"=>"Token incorrecto",
-		"login_error"=>"Faltan datos"
+		"login_error"=>"Faltan datos",
+		"verified_error"=>"Correo electrónico no verificado",
 	);
-
-	//obtenemos la accion a realizar, que es la variable GET "action" generada en el .htaccess
-	$action=$_GET["action"];
+	//obtenemos la accion a realizar y los demás parámetros desde la url cuando se usa mod_rewrite en .htaccess
+	$params=getURIParams();
+	$action=array_shift($params);
 	//inicializamos el json
+	$json["agent"]=$_SERVER["HTTP_USER_AGENT"];
 	$json["result"]="";
 	//parseamos la variable $_SERVER para eliminar el prefijo "redirect_" generado por el mod_rewrite de .htaccess
 	$_MySERVER=removePrefix("redirect_",$_SERVER);
@@ -50,6 +53,7 @@
 	else
 	{
 		//si no existe el archivo de accion, establecemos el mensaje de error en el json
+		$json["query"]=strtoupper($method)."=>$action";
 		$json["error_msg"] = $msgerrors["json_error"];
 	}
 	
@@ -68,7 +72,7 @@
 	header('Content-Length: ' . strlen($json));// longitud del JSON.
 	header('X-JSON: ' . $json); // JSON de la respuesta HTTP.
 	header('X-PHP: ' . phpversion()); // Versión de PHP.
-	header('X-API: ' . API_VERSION); // Versión de la API.
+	header('X-API: ' . API_VERSION_NUMBER); // Versión de la API.
 	header('X-OS: ' . php_uname()); // Sistema operativo.
 
 	echo $json;
