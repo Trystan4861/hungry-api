@@ -9,3 +9,4 @@ function removePrefix($prefix, $from) {
     }
     return $result;
 }
+function getURIParams(){return array_slice(explode("/", trim($_SERVER['REQUEST_URI'], '/')), 2);}
