@@ -19,4 +19,8 @@
     {
       $json["error_msg"] = $msgerrors["token_error"];
     }
+    elseif($action=="getIdUsuario")
+    {
+      $json["id_usuario"]=$id_usuario;
+    }
   }
