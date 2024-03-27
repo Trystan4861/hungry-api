@@ -1,12 +1,13 @@
 <?php 
   $FTO=array(
-    "config"      =>  "includes/config/config.inc.php",
-    "config.db"   =>  "includes/config/config.db.inc.php",
-    "user.class"  =>  "includes/clases/user.class.inc.php",
-    "json"        =>  "includes/php/json/json.inc.php",
-    "jwt"         =>  "includes/php/jwt/jwt.inc.php",
-    "server"      =>  "includes/php/server/server.inc.php",
-
+    "config"            =>  "includes/config/config.inc.php",
+    "config.db"         =>  "includes/config/config.db.inc.php",
+    "user.class"        =>  "includes/clases/user.class.inc.php",
+    "categorias.class"  =>  "includes/clases/categorias.class.inc.php",
+    "productos.class"   =>  "includes/clases/productos.class.inc.php",
+    "json"              =>  "includes/php/json/json.inc.php",
+    "jwt"               =>  "includes/php/jwt/jwt.inc.php",
+    "server"            =>  "includes/php/server/server.inc.php",
   );
 
   foreach($FTO as $key=>$value){
