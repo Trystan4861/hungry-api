@@ -9,54 +9,56 @@
 	//lanzamos el cargador de configuraciones, clases y funciones
 	require_once ROOT."includes/loader.inc.php";
 
-	//definimos los mensajes de error para mostrar en el json
-	$msgerrors=array(
-		"json_error"=>"Petición no encontrada o método erróneo",
-		"user_error"=>"Usuario o contraseña incorrectos",
-		"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión",
-		"token_error"=>"Token incorrecto",
-		"login_error"=>"Faltan datos",
-		"verified_error"=>"Correo electrónico no verificado",
-	);
-	//obtenemos la accion a realizar y los demás parámetros desde la url cuando se usa mod_rewrite en .htaccess
-	$params=getURIParams();
-	$action=array_shift($params);
-	//inicializamos el json
-	$json["agent"]=$_SERVER["HTTP_USER_AGENT"];
-	$json["result"]="";
-	//parseamos la variable $_SERVER para eliminar el prefijo "redirect_" generado por el mod_rewrite de .htaccess
-	$_MySERVER=removePrefix("redirect_",$_SERVER);
-	//obtenemos el metodo de la peticion
-	$method=$_MySERVER["REQUEST_METHOD"];
-	//obtenemos los datos de la peticion con los nombres de los campos en minuscula
-	$data=array_change_key_case(${"_$method"}, CASE_LOWER);
-	//pasamos a minuscula el metodo de la peticion para usarlo en el nombre del archivo de accion a ejecutar
-	$method=strtolower($method);
-	//obtenemos el nombre del archivo de accion a ejecutar
-	$FTO="includes/actions/$method/$action.inc.php";
-	//si el archivo de accion existe, ejecutamos la accion correspondiente, sino mostramos el mensaje de error
-	if (file_exists($FTO))
+	if (!isset($json["error_msg"]))
 	{
-		//si la accion no es ni login ni register
-		if($action!="login" && $action!="register")
+		//definimos los mensajes de error para mostrar en el json
+		$msgerrors=array(
+			"json_error"=>"Petición no encontrada o método erróneo",
+			"user_error"=>"Usuario o contraseña incorrectos",
+			"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión",
+			"token_error"=>"Token incorrecto",
+			"login_error"=>"Faltan datos",
+			"verified_error"=>"Correo electrónico no verificado",
+		);
+		//obtenemos la accion a realizar y los demás parámetros desde la url cuando se usa mod_rewrite en .htaccess
+		$params=getURIParams();
+		$action=array_shift($params);
+		//inicializamos el json
+		$json["agent"]=$_SERVER["HTTP_USER_AGENT"];
+		$json["result"]="";
+		//parseamos la variable $_SERVER para eliminar el prefijo "redirect_" generado por el mod_rewrite de .htaccess
+		$_MySERVER=removePrefix("redirect_",$_SERVER);
+		//obtenemos el metodo de la peticion
+		$method=$_MySERVER["REQUEST_METHOD"];
+		//obtenemos los datos de la peticion con los nombres de los campos en minuscula
+		$data=array_change_key_case(${"_$method"}, CASE_LOWER);
+		//pasamos a minuscula el metodo de la peticion para usarlo en el nombre del archivo de accion a ejecutar
+		$method=strtolower($method);
+		//obtenemos el nombre del archivo de accion a ejecutar
+		$FTO="includes/actions/$method/$action.inc.php";
+		//si el archivo de accion existe, ejecutamos la accion correspondiente, sino mostramos el mensaje de error
+		if (file_exists($FTO))
 		{
-			//tratamos de obtener el usuario a partir del token
-			require_once "includes/actions/get/getIdUsuario.inc.php";
+			//si la accion no es ni login ni register
+			if($action!="login" && $action!="register")
+			{
+				//tratamos de obtener el usuario a partir del token
+				require_once "includes/actions/get/getIdUsuario.inc.php";
+			}
+			//si no hay error al obtener el id_usuario
+			if (!isset($json["error_msg"]))
+			{
+				//ejecutamos la accion correspondiente
+				require_once "includes/actions/$method/$action.inc.php";
+			}
 		}
-		//si no hay error al obtener el id_usuario
-		if (!isset($json["error_msg"]))
+		else
 		{
-			//ejecutamos la accion correspondiente
-			require_once "includes/actions/$method/$action.inc.php";
+			//si no existe el archivo de accion, establecemos el mensaje de error en el json
+			$json["query"]=strtoupper($method)."=>$action";
+			$json["error_msg"] = $msgerrors["json_error"];
 		}
 	}
-	else
-	{
-		//si no existe el archivo de accion, establecemos el mensaje de error en el json
-		$json["query"]=strtoupper($method)."=>$action";
-		$json["error_msg"] = $msgerrors["json_error"];
-	}
-	
 	//si no hay error, establecemos el resultado en true, sino en false
 	$json["result"]=!isset($json["error_msg"]);
 	//codificamos el json para mostrarlo en el navegador
