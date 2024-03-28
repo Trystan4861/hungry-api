@@ -14,11 +14,18 @@
 		//definimos los mensajes de error para mostrar en el json
 		$msgerrors=array(
 			"json_error"=>"Petición no encontrada o método erróneo",
-			"user_error"=>"Usuario o contraseña incorrectos",
-			"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión",
+			"user_error"=>"Correo electrónico o contraseña incorrectos",
+			"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión con el mismo",
 			"token_error"=>"Token incorrecto",
 			"login_error"=>"Faltan datos",
 			"verified_error"=>"Correo electrónico no verificado",
+			"register_error"=>"Hubo un problema al procesar los datos de registro",
+			"no_mail_error"=>"El correo electrónico no está dado de alta en nuestro sistema",
+			"new_product_error"=>"Faltan datos",
+			"product_error"=>"Producto no encontrado",
+			"update_cagegory_error"=>"Faltan datos",
+			"update_product_error"=>"Faltan datos",
+			"hidden_markets_error"=>"Faltan datos",
 		);
 		//obtenemos la accion a realizar y los demás parámetros desde la url cuando se usa mod_rewrite en .htaccess
 		$params=getURIParams();
@@ -36,6 +43,11 @@
 		$method=strtolower($method);
 		//obtenemos el nombre del archivo de accion a ejecutar
 		$FTO="includes/actions/$method/$action.inc.php";
+		if (!file_exists($FTO))
+		{
+			$parsedParams=join("", array_map('ucwords', $params));
+			$FTO="includes/actions/$method/$action$parsedParams.inc.php";
+		}
 		//si el archivo de accion existe, ejecutamos la accion correspondiente, sino mostramos el mensaje de error
 		if (file_exists($FTO))
 		{
@@ -48,8 +60,11 @@
 			//si no hay error al obtener el id_usuario
 			if (!isset($json["error_msg"]))
 			{
+				$categorias= new Categorias($id_usuario);
+				$productos= new Productos($id_usuario);
+				$supermercados= new Supermercados($user->getSupermercadosOcultos());
 				//ejecutamos la accion correspondiente
-				require_once "includes/actions/$method/$action.inc.php";
+				require_once $FTO;
 			}
 		}
 		else

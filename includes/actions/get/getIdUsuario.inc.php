@@ -13,14 +13,17 @@
   }
   else
   {
-    $user=new User();
-    $id_usuario=$user->loadFromToken($token);
-    if($id_usuario==null)
+    $user=new User($token);
+    if ($user->getLastResult())
+    {
+      $id_usuario=$user->getIdUsuario();
+      if($action=="getIdUsuario")
+      {
+        $json["id_usuario"]=$id_usuario;
+      }
+    }
+    else
     {
       $json["error_msg"] = $msgerrors["token_error"];
-    }
-    elseif($action=="getIdUsuario")
-    {
-      $json["id_usuario"]=$id_usuario;
     }
   }

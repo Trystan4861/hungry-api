@@ -1,37 +1,44 @@
 <?php
-  if (!isset($data['email']) || !isset($data["pass"]))
+  $valores=array($data["email"], $data["pass"]);
+  if (in_array(null,$valores,true))
   {
     $json["error_msg"] = $msgerrors["login_error"];
   }
   else {
-    $sql="SELECT * FROM usuarios WHERE email=:email and pass=:pass";
-    $consulta=$DAO->prepare($sql);
-    $consulta->bindValue(":email",$data["email"]);
-    $consulta->bindValue(":pass", $data["pass"]);
-    $consulta->execute();
-    $resultado=$consulta->fetch(PDO::FETCH_ASSOC);
-    if ($resultado)
+    // Cargamos el usuario
+    $user= new User($data);
+    // si el usuario existe
+    if ($user->isLoaded())
     {
+      // obtenemos el usuario y su token
+      $resultado=$user->getUser();
+      // si el usuario esta verificado o no es necesario validarlo
       if ($resultado["verified"] || !MUST_VALIDATE)
       {
         $id_usuario = $resultado["id"];
         $json["token"] = $resultado["token"];
-        $token = generate_token($resultado["pass"]);
+        //regeneramos el token del usuario para hacer las comprobaciones pertinentes
+        $token = generate_token($resultado);
         if ($resultado["token"]!=$token)
         {
-          $sql="UPDATE usuarios SET token=:token WHERE id=:id";
-          $consulta=$DAO->prepare($sql);
-          $consulta->bindValue(":token", $token);
-          $consulta->bindValue(":id", $id_usuario);
-          $consulta->execute();
+          // si el token no es el mismo que el guardado, lo actualizamos en la base de datos
+          $user->updateToken($token);
           $json["token"] = $token;
         }
       }
       else {
-        $json["error_msg"] = $msgerrors["verified_error"];
+          // si el usuario no esta verificado, mandamos un error
+          $json["error_msg"] = $msgerrors["verified_error"];
       }
     }
     else {
-      $json["error_msg"] = $msgerrors["user_error"];
+      // si los datos de acceso son incorrecots, mandamos un error
+      if ($user->emailExists($data["email"]))
+      {
+        $json["error_msg"] = $msgerrors["user_error"];
+      }
+      else{
+        $json["error_msg"] = $msgerrors["no_mail_error"];
+      }
     }
   }
