@@ -9,6 +9,8 @@
 	//lanzamos el cargador de configuraciones, clases y funciones
 	require_once ROOT."includes/loader.inc.php";
 
+	$NoAuthActions=["login","register","test"];
+
 	if (!isset($json["error_msg"]))
 	{
 		//definimos los mensajes de error para mostrar en el json
@@ -31,7 +33,6 @@
 		$params=getURIParams();
 		$action=array_shift($params);
 		//inicializamos el json
-		$json["agent"]=$_SERVER["HTTP_USER_AGENT"];
 		$json["result"]="";
 		//parseamos la variable $_SERVER para eliminar el prefijo "redirect_" generado por el mod_rewrite de .htaccess
 		$_MySERVER=removePrefix("redirect_",$_SERVER);
@@ -51,8 +52,8 @@
 		//si el archivo de accion existe, ejecutamos la accion correspondiente, sino mostramos el mensaje de error
 		if (file_exists($FTO))
 		{
-			//si la accion no es ni login ni register
-			if($action!="login" && $action!="register")
+			//si la accion no se encuentra en el array de acciones que no necesitan token
+			if(!in_array($action,$NoAuthActions))
 			{
 				//tratamos de obtener el usuario a partir del token
 				require_once "includes/actions/get/getIdUsuario.inc.php";
@@ -60,9 +61,12 @@
 			//si no hay error al obtener el id_usuario
 			if (!isset($json["error_msg"]))
 			{
-				$categorias= new Categorias($id_usuario);
-				$productos= new Productos($id_usuario);
-				$supermercados= new Supermercados($user->getSupermercadosOcultos());
+				if (isset($id_usuario))
+				{
+					$categorias= new Categorias($id_usuario);
+					$productos= new Productos($id_usuario);
+					$supermercados= new Supermercados($user->getSupermercadosOcultos());
+				}
 				//ejecutamos la accion correspondiente
 				require_once $FTO;
 			}
@@ -79,17 +83,19 @@
 	//codificamos el json para mostrarlo en el navegador
 	$json = json_encode($json);
 	// Establecemos los encabezados de la respuesta HTTP a la API
-	header('Content-Type: application/json');
-	header('Access-Control-Allow-Origin: *'); // * para permitir cualquier origen.
-	header('Access-Control-Allow-Methods: GET, POST'); 
-	header('Access-Control-Allow-Headers: Content-Type'); 
 	header('Access-Control-Allow-Credentials: true'); // true para permitir credenciales de usuario.
+	header('Access-Control-Allow-Headers: authorization, content-type'); 
+	header('Access-Control-Allow-Methods: GET, POST'); 
+	header('Access-Control-Allow-Origin: *'); // * para permitir cualquier origen.
+	header('Access-Control-Expose-Headers: access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, access-control-max-age, content-length, content-type, x-api, x-json, x-php, x-powered-by'); // Exponer los encabezados de la respuesta HTTP a la API.
 	header('Access-Control-Max-Age: 86400'); // 24 horas
-	header('Access-Control-Expose-Headers: Content-Length, X-JSON, X-PHP, X-API, X-OS'); // Exponer los encabezados de la respuesta HTTP a la API.
+	
+	header('Content-Type: application/json');
+	//	header('Access-Control-Expose-Headers: age, accept-ranges, access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, allow, cache-control, connection, content-disposition, content-encoding, content-language, content-length, content-location, content-md5, content-range, content-security-policy, content-type, date, etag, expires, last-modified, link, location, p3p, pragma, proxy-authenticate, public-key-pins, refresh, retry-after, server, set-cookie, status, strict-transport-security, trailer, transfer-encoding, upgrade, vary, via, warning, www-authenticate, x-api, x-content-security-policy, x-content-type-options, x-frame-options, x-json, x-php, x-powered-by, x-ua-compatible, x-webkit-csp, x-xss-protection'); // Exponer los encabezados de la respuesta HTTP a la API.
 	header('Content-Length: ' . strlen($json));// longitud del JSON.
-	header('X-JSON: ' . $json); // JSON de la respuesta HTTP.
-	header('X-PHP: ' . phpversion()); // Versión de PHP.
-	header('X-API: ' . API_VERSION_NUMBER); // Versión de la API.
-	header('X-OS: ' . php_uname()); // Sistema operativo.
-
+	header('X-Json: ' . $json); // JSON de la respuesta HTTP.
+	header('X-Php: ' . phpversion()); // Versión de PHP.
+	header('X-Api: ' . API_VERSION_NUMBER); // Versión de la API.
+	header('X-Os: ' . php_uname()); // Sistema operativo.
+	header('X-Powered-By: ' . $_SERVER['SERVER_SOFTWARE']); // Software del servidor.
 	echo $json;

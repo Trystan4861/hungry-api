@@ -33,7 +33,7 @@
     }
     else {
       // si los datos de acceso son incorrecots, mandamos un error
-      if ($user->emailExists($data["email"]))
+      if ($user->emailExists(trim(strtolower($data["email"]))))
       {
         $json["error_msg"] = $msgerrors["user_error"];
       }

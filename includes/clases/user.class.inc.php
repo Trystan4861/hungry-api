@@ -52,7 +52,7 @@ class User {
             if (is_array($data)) {
                 $sql = "SELECT * FROM usuarios WHERE email = :email AND pass = :pass";
                 $consulta = $this->DAO->prepare($sql);
-                $consulta->bindValue(":email", $data["email"]);
+                $consulta->bindValue(":email", strtolower(trim($data["email"])));
                 $consulta->bindValue(":pass", $data["pass"]);
             } else {
                 $sql = "SELECT * FROM usuarios WHERE token = :token";

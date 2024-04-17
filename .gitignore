@@ -36,3 +36,4 @@ coverage/
 
 # Archivos ignorados específicamente
 /.htaccess
+/.wakatime-project
