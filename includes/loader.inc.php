@@ -1,4 +1,6 @@
 <?php 
+  $env=parse_ini_file(ROOT.'.env');
+
   $FTO=array(
     "config"              =>  "includes/config/config.inc.php",
     "config.db"           =>  "includes/config/config.db.inc.php",

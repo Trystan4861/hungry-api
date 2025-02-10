@@ -12,9 +12,9 @@ class Supermercados{
   function __construct($supermercadosOcultos=null){
     global $DAO;
     $this->DAO = $DAO;
-    if ($supermercadosOcultos!=null){
+    //if ($supermercadosOcultos!=null){
       $this->loadSupermercados($supermercadosOcultos);
-    }
+    //}
   }
   
   private function returnError($error_msg) {

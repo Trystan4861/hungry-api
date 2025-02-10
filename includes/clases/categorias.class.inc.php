@@ -38,7 +38,7 @@ class Categorias {
     }
 
     public function loadCategoria($idCategoria) {
-        $consulta = $this->DAO->prepare("SELECT `id_categoria`,`text`,`bgColor`,`visible` FROM categorias where `id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT uc.`fk_id_categoria` as id_categoria, uc.`text`, c.`bgColor`, uc.`visible` FROM categorias as c, usuarios_categorias as uc where uc.`fk_id_categoria`=c.`id` and c.`id`=:idCategoria and uc.`fk_id_usuario`=:userId");
         $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
         $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -47,7 +47,7 @@ class Categorias {
 
 
     public function getCategorias() {
-        $consulta = $this->DAO->prepare("SELECT `id_categoria`,`text`,`bgColor`,`visible` FROM categorias WHERE `fk_id_usuario` = :userId");
+        $consulta = $this->DAO->prepare("SELECT uc.`fk_id_categoria` as id_categoria, uc.`text`, c.`bgColor`, uc.`visible` FROM categorias as c, usuarios_categorias as uc where uc.`fk_id_categoria`=c.`id` and uc.`fk_id_usuario`=:userId");
         $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
         return $this->setResult($consulta->fetchAll(PDO::FETCH_ASSOC));
@@ -57,7 +57,7 @@ class Categorias {
     {
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE categorias SET `text`=:text WHERE `id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+            $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `text`=:text WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
             $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
             $consulta->bindParam(":text", $text, PDO::PARAM_STR);
             $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
@@ -71,7 +71,7 @@ class Categorias {
     }
     public function updateCategoriaVisible($idCategoria,$visible)
     {
-        $consulta = $this->DAO->prepare("UPDATE categorias SET `visible`=:visible WHERE `id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `visible`=:visible WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
         $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
         $consulta->bindParam(":visible", $visible, PDO::PARAM_INT);
         $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);

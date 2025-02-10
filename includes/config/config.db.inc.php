@@ -1,6 +1,4 @@
 <?php
-	$env=parse_ini_file(ROOT.'.env');
-
 	try
 	{
 		$DAO = new PDO("mysql:host=$env[DB_HOST];dbname=$env[DB_NAME];charset=utf8", $env["DB_USER"], $env["DB_PASS"],array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));

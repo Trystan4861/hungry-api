@@ -41,7 +41,7 @@ class Productos {
     public function getProductos() {
         try
         {
-            $consulta = $this->DAO->prepare("SELECT `id_producto`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `fk_id_usuario`=:userId");
+            $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `fk_id_usuario`=:userId");
             $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
             $consulta->execute();
             return $this->setResult($consulta->fetchAll(PDO::FETCH_ASSOC));
@@ -54,7 +54,7 @@ class Productos {
 
     public function loadProducto($idProducto,$super=false) {
         $campo="id".((!$super)?"_producto":"");
-        $consulta = $this->DAO->prepare("SELECT `id_producto`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where $campo=:idProducto and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where $campo=:idProducto and `fk_id_usuario`=:userId");
         $consulta->bindValue(":idProducto", $idProducto, PDO::PARAM_INT);
         $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -63,7 +63,7 @@ class Productos {
 
 
     public function getProductosPorCategoria($idCategoria) {
-        $consulta = $this->DAO->prepare("SELECT `id_producto`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `fk_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `fk_categoria`=:idCategoria and `fk_id_usuario`=:userId");
         $consulta->bindValue(":idCategoria", $idCategoria, PDO::PARAM_INT);
         $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -71,7 +71,7 @@ class Productos {
     }
 
     public function getProductosPorNombre($nombre) {
-        $consulta = $this->DAO->prepare("SELECT `id_producto`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `text` like :nombre and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `text` like :nombre and `fk_id_usuario`=:userId");
         $consulta->bindValue(":text", $nombre, PDO::PARAM_STR);
         $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -97,7 +97,7 @@ class Productos {
     public function updateProductoAmount($idProducto, $amount){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `amount`=:amount WHERE `id_producto`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $consulta = $this->DAO->prepare("UPDATE productos SET `amount`=:amount WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":amount", $amount, PDO::PARAM_INT);
             $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
@@ -112,7 +112,7 @@ class Productos {
     public function updateProductoSelected($idProducto, $selected){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `selected`=:selected WHERE `id_producto`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $consulta = $this->DAO->prepare("UPDATE productos SET `selected`=:selected WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":selected", $selected, PDO::PARAM_INT);
             $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
@@ -127,7 +127,7 @@ class Productos {
     public function updateProductoDone($idProducto, $done){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `done`=:done WHERE `id_producto`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $consulta = $this->DAO->prepare("UPDATE productos SET `done`=:done WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":done", $done, PDO::PARAM_INT);
             $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
@@ -142,7 +142,7 @@ class Productos {
     public function updateProducto($data){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `text`=:text, `fk_id_categoria`=:fk_id_categoria, `fk_id_supermercado`=:fk_id_supermercado WHERE `id_producto`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $consulta = $this->DAO->prepare("UPDATE productos SET `text`=:text, `fk_id_categoria`=:fk_id_categoria, `fk_id_supermercado`=:fk_id_supermercado WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":text", $data['text'], PDO::PARAM_STR);
             $consulta->bindValue(":fk_id_categoria", $data['id_categoria'], PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_supermercado", $data['id_supermercado'], PDO::PARAM_INT);
@@ -159,7 +159,7 @@ class Productos {
     public function deleteProducto($idProducto){
         try
         {
-            $consulta = $this->DAO->prepare("DELETE FROM productos WHERE `id_producto`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $consulta = $this->DAO->prepare("DELETE FROM productos WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
             $consulta->execute();
@@ -176,7 +176,7 @@ class Productos {
         try
         {
             $ids=implode(",",array_column($data, 'id_producto'));
-            $consulta = $this->DAO->prepare("DELETE FROM productos WHERE `id_producto` NOT IN ($ids) and `fk_id_usuario`=:fk_id_usuario");
+            $consulta = $this->DAO->prepare("DELETE FROM productos WHERE `id` NOT IN ($ids) and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
             $consulta->execute();
             $this->is_done=true;

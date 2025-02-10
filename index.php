@@ -93,7 +93,6 @@
 	header('Content-Type: application/json');
 	//	header('Access-Control-Expose-Headers: age, accept-ranges, access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, allow, cache-control, connection, content-disposition, content-encoding, content-language, content-length, content-location, content-md5, content-range, content-security-policy, content-type, date, etag, expires, last-modified, link, location, p3p, pragma, proxy-authenticate, public-key-pins, refresh, retry-after, server, set-cookie, status, strict-transport-security, trailer, transfer-encoding, upgrade, vary, via, warning, www-authenticate, x-api, x-content-security-policy, x-content-type-options, x-frame-options, x-json, x-php, x-powered-by, x-ua-compatible, x-webkit-csp, x-xss-protection'); // Exponer los encabezados de la respuesta HTTP a la API.
 	header('Content-Length: ' . strlen($json));// longitud del JSON.
-	header('X-Json: ' . $json); // JSON de la respuesta HTTP.
 	header('X-Php: ' . phpversion()); // Versión de PHP.
 	header('X-Api: ' . API_VERSION_NUMBER); // Versión de la API.
 	header('X-Os: ' . php_uname()); // Sistema operativo.
