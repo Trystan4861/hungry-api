@@ -1,4 +1,4 @@
 <?php
   $json["categorias"]=$categorias->getCategorias();
   $json["productos"]=$productos->getProductos();
-  $json["supermercados"]=$supermercados->getSupermercados();
+  $json["supermercados"]=$supermercados->getSupermercados($user->getSupermercadosOcultos());
