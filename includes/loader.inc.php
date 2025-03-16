@@ -11,6 +11,7 @@
     "json"                =>  "includes/php/json/json.inc.php",
     "jwt"                 =>  "includes/php/jwt/jwt.inc.php",
     "server"              =>  "includes/php/server/server.inc.php",
+    "functions"           =>  "includes/php/functions.php",
   );
 
   foreach($FTO as $key=>$value){

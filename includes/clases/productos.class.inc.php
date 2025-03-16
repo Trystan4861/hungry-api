@@ -52,9 +52,8 @@ class Productos {
         }
     }
 
-    public function loadProducto($idProducto,$super=false) {
-        $campo="id".((!$super)?"_producto":"");
-        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where $campo=:idProducto and `fk_id_usuario`=:userId");
+    public function loadProducto($idProducto) {
+        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `id`=:idProducto and `fk_id_usuario`=:userId");
         $consulta->bindValue(":idProducto", $idProducto, PDO::PARAM_INT);
         $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -87,7 +86,7 @@ class Productos {
             $consulta->bindValue(":fk_id_supermercado", $data['id_supermercado'], PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
             $consulta->execute();
-            return $this->loadProducto($this->DAO->lastInsertId(),true);
+            return $this->loadProducto($this->DAO->lastInsertId());
         }
         catch(PDOException $e)
         {

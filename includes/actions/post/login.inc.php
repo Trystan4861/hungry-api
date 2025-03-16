@@ -16,7 +16,9 @@
       if ($resultado["verified"] || !MUST_VALIDATE)
       {
         $id_usuario = $resultado["id"];
+        $json["device"]=$user->getDevice();
         $json["token"] = $resultado["token"];
+
         //regeneramos el token del usuario para hacer las comprobaciones pertinentes
         $token = generate_token($resultado);
         if ($resultado["token"]!=$token)

@@ -7,6 +7,13 @@
 	//definimos la constante MUST_VALIDATE que controlará si se obligará a validar los correos electrónicos de los usuarios
 	define('MUST_VALIDATE',false);
 	//lanzamos el cargador de configuraciones, clases y funciones
+
+	define('APP_NAME', "Hungry by @trystan4861");
+	define('APP_URL', "https://www.infoinnova.es/lolo/api/");
+	define('APP_EMAIL', "hungry.by.trystan4861@gmail.com");
+	define('APP_EMAIL_NAME', APP_NAME);
+	define('APP_EMAIL_PASSWORD', "uhuk kbrc rbmr dfcy");
+
 	require_once ROOT."includes/loader.inc.php";
 
 	$NoAuthActions=["login","register","test"];
@@ -18,6 +25,7 @@
 			"json_error"=>"Petición no encontrada o método erróneo",
 			"user_error"=>"Correo electrónico o contraseña incorrectos",
 			"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión con el mismo",
+			"register_validate"=>"Registro completado, revise su correo electrónico para validar su cuenta",
 			"token_error"=>"Token incorrecto",
 			"login_error"=>"Faltan datos",
 			"verified_error"=>"Correo electrónico no verificado",
@@ -43,9 +51,19 @@
 		//pasamos a minuscula el metodo de la peticion para usarlo en el nombre del archivo de accion a ejecutar
 		$method=strtolower($method);
 		//obtenemos el nombre del archivo de accion a ejecutar
+		if ($method="get") // si el metodo es GET
+		{
+		    if (strstr($action,"?")) // y han formado mal la peticion haciendo por ejemplo .../api/test?param1=val1&param2=val2 en lugar de .../api/test/?param1=val1&param2=val2
+		    {
+		        list($action,$params)=explode("?",$action); //extraemos la accion y los parametros de la peticion
+		        $params=explode("&",$params); // y generamos un array con los parametros
+			}
+		}
 		$FTO="includes/actions/$method/$action.inc.php";
 		if (!file_exists($FTO))
 		{
+			//si no existe el archivo de accion, intentamos obtener el nombre del archivo de accion con los parametros
+			//en caso de que se haya usado mod_rewrite en .htaccess
 			$parsedParams=join("", array_map('ucwords', $params));
 			$FTO="includes/actions/$method/$action$parsedParams.inc.php";
 		}
@@ -84,13 +102,13 @@
 	$json = json_encode($json);
 	// Establecemos los encabezados de la respuesta HTTP a la API
 	header('Access-Control-Allow-Credentials: true'); // true para permitir credenciales de usuario.
-	header('Access-Control-Allow-Headers: authorization, content-type'); 
-	header('Access-Control-Allow-Methods: GET, POST'); 
+	header('Access-Control-Allow-Headers: authorization, content-type');
+	header('Access-Control-Allow-Methods: GET, POST');
 	header('Access-Control-Allow-Origin: *'); // * para permitir cualquier origen.
 	header('Access-Control-Expose-Headers: access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, access-control-max-age, content-length, content-type, x-api, x-json, x-php, x-powered-by'); // Exponer los encabezados de la respuesta HTTP a la API.
 	header('Access-Control-Max-Age: 86400'); // 24 horas
-	
-	header('Content-Type: application/json');
+
+	header('Content-Type: application/json; charset=utf-8');
 	//	header('Access-Control-Expose-Headers: age, accept-ranges, access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, allow, cache-control, connection, content-disposition, content-encoding, content-language, content-length, content-location, content-md5, content-range, content-security-policy, content-type, date, etag, expires, last-modified, link, location, p3p, pragma, proxy-authenticate, public-key-pins, refresh, retry-after, server, set-cookie, status, strict-transport-security, trailer, transfer-encoding, upgrade, vary, via, warning, www-authenticate, x-api, x-content-security-policy, x-content-type-options, x-frame-options, x-json, x-php, x-powered-by, x-ua-compatible, x-webkit-csp, x-xss-protection'); // Exponer los encabezados de la respuesta HTTP a la API.
 	header('Content-Length: ' . strlen($json));// longitud del JSON.
 	header('X-Php: ' . phpversion()); // Versión de PHP.

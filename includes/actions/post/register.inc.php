@@ -19,7 +19,15 @@
         $json["error_msg"] = $msgerrors["register_error"];
       }
       else {
-        $json["token"] = $token;
+        if (MUST_VALIDATE)
+        {
+          $user->sendValidationEmail($data["email"], $token);
+          $json["error_msg"] = $msgerrors["register_validate"];
+        }
+        else {
+          $user->validateUser($data["email"], $token);
+          $json["token"] = $token;
+        }
       }
     }
   }  
