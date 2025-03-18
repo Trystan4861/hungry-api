@@ -51,7 +51,7 @@
 		//pasamos a minuscula el metodo de la peticion para usarlo en el nombre del archivo de accion a ejecutar
 		$method=strtolower($method);
 		//obtenemos el nombre del archivo de accion a ejecutar
-		if ($method="get") // si el metodo es GET
+		if ($method=="get") // si el metodo es GET
 		{
 		    if (strstr($action,"?")) // y han formado mal la peticion haciendo por ejemplo .../api/test?param1=val1&param2=val2 en lugar de .../api/test/?param1=val1&param2=val2
 		    {
