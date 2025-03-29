@@ -16,7 +16,7 @@ class Supermercados{
       $this->loadSupermercados($supermercadosOcultos);
     //}
   }
-  
+
   private function returnError($error_msg) {
     $this->is_done = false;
     $this->error_msg = $error_msg;
@@ -34,10 +34,11 @@ class Supermercados{
           $this->is_done=false;
       }
       return $result;
-  }  
+  }
   public function loadSupermercados($supermercadosOcultos){
     if (strlen($supermercadosOcultos) == 0 || $supermercadosOcultos=="[]"){
-      $sql="SELECT * FROM supermercados";
+      $sql="SELECT s.*, us.timestamp FROM supermercados s
+            LEFT JOIN usuarios_supermercados us ON s.id = us.fk_id_supermercado";
     }
     else
     {
@@ -50,7 +51,9 @@ class Supermercados{
         }
         $supermercadosOcultos = implode(", ", $supermercadosOcultos);
       }
-      $sql="SELECT * FROM supermercados where id not in ($supermercadosOcultos)";
+      $sql="SELECT s.*, us.timestamp FROM supermercados s
+            LEFT JOIN usuarios_supermercados us ON s.id = us.fk_id_supermercado
+            WHERE s.id NOT IN ($supermercadosOcultos)";
     }
     try
       {

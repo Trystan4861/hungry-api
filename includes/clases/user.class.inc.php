@@ -115,10 +115,12 @@ class User {
     //funcion que actualiza el token del usuario en la base de datos
     public function updateToken($new_token){
         try {
-            $sql = "UPDATE usuarios SET token = :token WHERE id = :id";
+            $timestamp = time(); // Timestamp en segundos
+            $sql = "UPDATE usuarios SET token = :token, lastLoginTimestamp = :timestamp WHERE id = :id";
             $consulta = $this->DAO->prepare($sql);
             $consulta->bindValue(":token", $new_token);
             $consulta->bindValue(":id", $this->user["id"]);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
             return $this->load($this->user["token"]);
         } catch (PDOException $e) {
@@ -130,15 +132,19 @@ class User {
     public function createUser($data) {
         $data["microtime"]=microtime(true);
         $token=generate_token($data);
+        $timestamp = time(); // Timestamp en segundos
+
         try {
-            $sql = "INSERT INTO usuarios (email, pass, token, microtime) VALUES (:email, :pass, :token,:microtime)";
+            $sql = "INSERT INTO usuarios (email, pass, token, microtime, lastChangeTimestamp, lastLoginTimestamp)
+                    VALUES (:email, :pass, :token, :microtime, :timestamp, :timestamp)";
             $consulta = $this->DAO->prepare($sql);
             $consulta->bindValue(":email", $data["email"]);
             $consulta->bindValue(":pass", $data["pass"]);
-            $consulta->bindValue(":microtime",$data["microtime"]);
+            $consulta->bindValue(":microtime", $data["microtime"]);
             $consulta->bindValue(":token", $token);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
-            return $this->load($this->user["token"]);
+            return $this->load($token);
         } catch (PDOException $e) {
             return $this->returnError($e->getMessage());
         }
@@ -148,15 +154,18 @@ class User {
     public function updatePassword($data){
         $data["microtime"]=microtime(true);
         $token=generate_token($data);
+        $timestamp = time(); // Timestamp en segundos
+
         try {
-            $sql = "UPDATE usuarios SET pass = :pass, token = :token, microtime = :microtime WHERE id = :id";
+            $sql = "UPDATE usuarios SET pass = :pass, token = :token, microtime = :microtime, lastChangeTimestamp = :timestamp WHERE id = :id";
             $consulta = $this->DAO->prepare($sql);
             $consulta->bindValue(":pass", $data["pass"]);
             $consulta->bindValue(":microtime", $data["microtime"]);
             $consulta->bindValue(":token", $token);
             $consulta->bindValue(":id", $this->user["id"]);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
-            return $this->load($this->user["token"]);
+            return $this->load($token);
         } catch (PDOException $e) {
             return $this->returnError($e->getMessage());
         }

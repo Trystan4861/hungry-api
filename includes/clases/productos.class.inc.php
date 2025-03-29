@@ -3,7 +3,7 @@
 use \PDO;
 use \PDOException;*/
 class Productos {
-    
+
     private $DAO;
     private $userId;
     private $is_done;
@@ -41,7 +41,7 @@ class Productos {
     public function getProductos() {
         try
         {
-            $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `fk_id_usuario`=:userId");
+            $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done`,`timestamp` FROM productos where `fk_id_usuario`=:userId");
             $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
             $consulta->execute();
             return $this->setResult($consulta->fetchAll(PDO::FETCH_ASSOC));
@@ -53,7 +53,7 @@ class Productos {
     }
 
     public function loadProducto($idProducto) {
-        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `id`=:idProducto and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done`,`timestamp` FROM productos where `id`=:idProducto and `fk_id_usuario`=:userId");
         $consulta->bindValue(":idProducto", $idProducto, PDO::PARAM_INT);
         $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -62,7 +62,7 @@ class Productos {
 
 
     public function getProductosPorCategoria($idCategoria) {
-        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `fk_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done`,`timestamp` FROM productos where `fk_categoria`=:idCategoria and `fk_id_usuario`=:userId");
         $consulta->bindValue(":idCategoria", $idCategoria, PDO::PARAM_INT);
         $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -70,7 +70,7 @@ class Productos {
     }
 
     public function getProductosPorNombre($nombre) {
-        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done` FROM productos where `text` like :nombre and `fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT `id`,`fk_id_categoria` as 'id_categoria', `fk_id_supermercado` as 'id_supermercado',`text`,`amount`,`selected`,`done`,`timestamp` FROM productos where `text` like :nombre and `fk_id_usuario`=:userId");
         $consulta->bindValue(":text", $nombre, PDO::PARAM_STR);
         $consulta->bindValue(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -79,12 +79,13 @@ class Productos {
     public function newProducto($data){
         try
         {
-            
-            $consulta = $this->DAO->prepare("INSERT INTO productos (`text`, `fk_id_categoria`, `fk_id_usuario`, `fk_id_supermercado`) VALUES (:text, :fk_categoria, :fk_id_usuario, :fk_id_supermercado)");
+            $timestamp = time(); // Timestamp en segundos
+            $consulta = $this->DAO->prepare("INSERT INTO productos (`text`, `fk_id_categoria`, `fk_id_usuario`, `fk_id_supermercado`, `timestamp`) VALUES (:text, :fk_categoria, :fk_id_usuario, :fk_id_supermercado, :timestamp)");
             $consulta->bindValue(":text", $data['text'], PDO::PARAM_STR);
             $consulta->bindValue(":fk_categoria", $data['id_categoria'], PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_supermercado", $data['id_supermercado'], PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
             return $this->loadProducto($this->DAO->lastInsertId());
         }
@@ -96,10 +97,12 @@ class Productos {
     public function updateProductoAmount($idProducto, $amount){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `amount`=:amount WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $timestamp = time(); // Timestamp en segundos
+            $consulta = $this->DAO->prepare("UPDATE productos SET `amount`=:amount, `timestamp`=:timestamp WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":amount", $amount, PDO::PARAM_INT);
             $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
             return $this->loadProducto($idProducto);
         }
@@ -111,10 +114,12 @@ class Productos {
     public function updateProductoSelected($idProducto, $selected){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `selected`=:selected WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $timestamp = time(); // Timestamp en segundos
+            $consulta = $this->DAO->prepare("UPDATE productos SET `selected`=:selected, `timestamp`=:timestamp WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":selected", $selected, PDO::PARAM_INT);
             $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
             return $this->loadProducto($idProducto);
         }
@@ -126,10 +131,12 @@ class Productos {
     public function updateProductoDone($idProducto, $done){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `done`=:done WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $timestamp = time(); // Timestamp en segundos
+            $consulta = $this->DAO->prepare("UPDATE productos SET `done`=:done, `timestamp`=:timestamp WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":done", $done, PDO::PARAM_INT);
             $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
             return $this->loadProducto($idProducto);
         }
@@ -141,13 +148,17 @@ class Productos {
     public function updateProducto($data){
         try
         {
-            $consulta = $this->DAO->prepare("UPDATE productos SET `text`=:text, `fk_id_categoria`=:fk_id_categoria, `fk_id_supermercado`=:fk_id_supermercado WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $timestamp = time(); // Timestamp en segundos
+            $consulta = $this->DAO->prepare("UPDATE productos SET `text`=:text, `fk_id_categoria`=:fk_id_categoria, `fk_id_supermercado`=:fk_id_supermercado, `timestamp`=:timestamp WHERE `id`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
             $consulta->bindValue(":text", $data['text'], PDO::PARAM_STR);
             $consulta->bindValue(":fk_id_categoria", $data['id_categoria'], PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_supermercado", $data['id_supermercado'], PDO::PARAM_INT);
             $consulta->bindValue(":id_producto", $data['id_producto'], PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
+            $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
+            // Actualizar el timestamp en los datos devueltos
+            $data['timestamp'] = $timestamp;
             return $this->setResult($data);
         }
         catch(PDOException $e)
