@@ -13,6 +13,21 @@
 	define('APP_EMAIL', "hungry.by.trystan4861@gmail.com");
 	define('APP_EMAIL_NAME', APP_NAME);
 	define('APP_EMAIL_PASSWORD', "uhuk kbrc rbmr dfcy");
+	
+	// Establecemos los encabezados CORS para todas las respuestas, incluidas las solicitudes OPTIONS
+	header('Access-Control-Allow-Credentials: true'); // true para permitir credenciales de usuario.
+	header('Access-Control-Allow-Headers: Authorization, Content-Type, X-Requested-With');
+	header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+	header('Access-Control-Allow-Origin: *'); // * para permitir cualquier origen.
+	header('Access-Control-Expose-Headers: access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, access-control-max-age, content-length, content-type, x-api, x-json, x-php, x-powered-by'); // Exponer los encabezados de la respuesta HTTP a la API.
+	header('Access-Control-Max-Age: 86400'); // 24 horas
+
+	// Si es una solicitud OPTIONS, respondemos inmediatamente con un 200 OK
+	if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+		header('Content-Length: 0');
+		header('Content-Type: text/plain');
+		exit(0);
+	}
 
 	require_once ROOT."includes/loader.inc.php";
 
@@ -46,8 +61,27 @@
 		$_MySERVER=removePrefix("redirect_",$_SERVER);
 		//obtenemos el metodo de la peticion
 		$method=$_MySERVER["REQUEST_METHOD"];
-		//obtenemos los datos de la peticion con los nombres de los campos en minuscula
-		$data=array_change_key_case(${"_$method"}, CASE_LOWER);
+
+		// Procesamos los datos de entrada según el tipo de contenido
+		$content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+
+		// Si es una petición JSON (común en aplicaciones modernas con Axios, Fetch, etc.)
+		if (strpos($content_type, 'application/json') !== false) {
+			$json_data = file_get_contents('php://input');
+			$json_parsed = json_decode($json_data, true);
+
+			// Si se pudo decodificar el JSON correctamente
+			if ($json_parsed !== null) {
+				$data = array_change_key_case($json_parsed, CASE_LOWER);
+			} else {
+				// Si hay error en el JSON, usamos los datos tradicionales
+				$data = array_change_key_case(${"_$method"}, CASE_LOWER);
+			}
+		} else {
+			// Para peticiones tradicionales (form-data, x-www-form-urlencoded)
+			$data = array_change_key_case(${"_$method"}, CASE_LOWER);
+		}
+
 		//pasamos a minuscula el metodo de la peticion para usarlo en el nombre del archivo de accion a ejecutar
 		$method=strtolower($method);
 		//obtenemos el nombre del archivo de accion a ejecutar
@@ -100,16 +134,8 @@
 	$json["result"]=!isset($json["error_msg"]);
 	//codificamos el json para mostrarlo en el navegador
 	$json = json_encode($json);
-	// Establecemos los encabezados de la respuesta HTTP a la API
-	header('Access-Control-Allow-Credentials: true'); // true para permitir credenciales de usuario.
-	header('Access-Control-Allow-Headers: authorization, content-type');
-	header('Access-Control-Allow-Methods: GET, POST');
-	header('Access-Control-Allow-Origin: *'); // * para permitir cualquier origen.
-	header('Access-Control-Expose-Headers: access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, access-control-max-age, content-length, content-type, x-api, x-json, x-php, x-powered-by'); // Exponer los encabezados de la respuesta HTTP a la API.
-	header('Access-Control-Max-Age: 86400'); // 24 horas
 
 	header('Content-Type: application/json; charset=utf-8');
-	//	header('Access-Control-Expose-Headers: age, accept-ranges, access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, allow, cache-control, connection, content-disposition, content-encoding, content-language, content-length, content-location, content-md5, content-range, content-security-policy, content-type, date, etag, expires, last-modified, link, location, p3p, pragma, proxy-authenticate, public-key-pins, refresh, retry-after, server, set-cookie, status, strict-transport-security, trailer, transfer-encoding, upgrade, vary, via, warning, www-authenticate, x-api, x-content-security-policy, x-content-type-options, x-frame-options, x-json, x-php, x-powered-by, x-ua-compatible, x-webkit-csp, x-xss-protection'); // Exponer los encabezados de la respuesta HTTP a la API.
 	header('Content-Length: ' . strlen($json));// longitud del JSON.
 	header('X-Php: ' . phpversion()); // Versión de PHP.
 	header('X-Api: ' . API_VERSION_NUMBER); // Versión de la API.
