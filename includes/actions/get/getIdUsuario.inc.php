@@ -13,7 +13,7 @@
   }
   else
   {
-    $user=new User($token);
+    $user=new Usuario($token);
     if ($user->getLastResult())
     {
       $id_usuario=$user->getIdUsuario();

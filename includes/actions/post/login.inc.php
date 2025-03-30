@@ -6,7 +6,7 @@
   }
   else {
     // Cargamos el usuario
-    $user= new User($data);
+    $user= new Usuario($data);
     // si el usuario existe
     if ($user->isLoaded())
     {

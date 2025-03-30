@@ -1,5 +1,5 @@
 <?php
-class User {
+class Usuario {
     private $is_done;
     private $user;
     private $device;
@@ -10,13 +10,18 @@ class User {
     public function __construct($data = null) {
         global $DAO;
         $this->json = $json;
-        $this->DAO = $DAO;
         if ($data) {
             $this->load($data);
         } else {
             $this->emptyUser();
         }
     }
+    /**
+     * returnError
+     * Establece un mensaje de error y marca la operación como fallida
+     * @param string $error_msg Mensaje de error a establecer
+     * @return null Siempre devuelve null para indicar error
+     */
     private function returnError($error_msg) {
         $this->is_done = false;
         $this->error_msg = $error_msg;
@@ -128,25 +133,55 @@ class User {
         }
     }
 
-    //funcion que crea un nuevo usuario en la base de datos con los datos de acceso y el token generado
+    /**
+     * createUser
+     * Crea un nuevo usuario en la base de datos con los datos de acceso y el token generado
+     * @param array $data Array con los datos del usuario (email, pass, microtime)
+     * @return mixed ID del usuario si se crea correctamente, null en caso de error
+     */
     public function createUser($data) {
-        $data["microtime"]=microtime(true);
-        $token=generate_token($data);
+        // Validamos que los datos necesarios estén presentes
+        if (!isset($data["email"]) || !isset($data["pass"])) {
+            return $this->returnError("Faltan datos obligatorios para crear el usuario (email y/o contraseña)");
+        }
+
+        // Validamos el formato del email
+        if (!filter_var($data["email"], FILTER_VALIDATE_EMAIL)) {
+            return $this->returnError("El formato del correo electrónico no es válido");
+        }
+
+        // Validamos que la contraseña tenga al menos 6 caracteres
+        if (strlen($data["pass"]) < 6) {
+            return $this->returnError("La contraseña debe tener al menos 6 caracteres");
+        }
+
+        $data["microtime"] = microtime(true);
+        $token = generate_token($data);
         $timestamp = time(); // Timestamp en segundos
 
         try {
             $sql = "INSERT INTO usuarios (email, pass, token, microtime, lastChangeTimestamp, lastLoginTimestamp)
                     VALUES (:email, :pass, :token, :microtime, :timestamp, :timestamp)";
             $consulta = $this->DAO->prepare($sql);
-            $consulta->bindValue(":email", $data["email"]);
+            $consulta->bindValue(":email", strtolower(trim($data["email"])));
             $consulta->bindValue(":pass", $data["pass"]);
             $consulta->bindValue(":microtime", $data["microtime"]);
             $consulta->bindValue(":token", $token);
             $consulta->bindValue(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
-            return $this->load($token);
+
+            // Verificamos si se insertó correctamente
+            if ($consulta->rowCount() > 0) {
+                return $this->load($token);
+            } else {
+                return $this->returnError("No se pudo crear el usuario. No se insertó ningún registro.");
+            }
         } catch (PDOException $e) {
-            return $this->returnError($e->getMessage());
+            // Capturamos errores específicos de la base de datos
+            if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                return $this->returnError("El correo electrónico ya está registrado en el sistema");
+            }
+            return $this->returnError("Error de base de datos: " . $e->getMessage());
         }
     }
 
