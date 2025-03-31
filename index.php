@@ -13,7 +13,7 @@
 	define('APP_EMAIL', "hungry.by.trystan4861@gmail.com");
 	define('APP_EMAIL_NAME', APP_NAME);
 	define('APP_EMAIL_PASSWORD', "uhuk kbrc rbmr dfcy");
-	
+
 	// Establecemos los encabezados CORS para todas las respuestas, incluidas las solicitudes OPTIONS
 	header('Access-Control-Allow-Credentials: true'); // true para permitir credenciales de usuario.
 	header('Access-Control-Allow-Headers: Authorization, Content-Type, X-Requested-With');
@@ -61,7 +61,6 @@
 		$_MySERVER=removePrefix("redirect_",$_SERVER);
 		//obtenemos el metodo de la peticion
 		$method=$_MySERVER["REQUEST_METHOD"];
-
 		// Procesamos los datos de entrada según el tipo de contenido
 		$content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 
@@ -81,7 +80,6 @@
 			// Para peticiones tradicionales (form-data, x-www-form-urlencoded)
 			$data = array_change_key_case(${"_$method"}, CASE_LOWER);
 		}
-
 		//pasamos a minuscula el metodo de la peticion para usarlo en el nombre del archivo de accion a ejecutar
 		$method=strtolower($method);
 		//obtenemos el nombre del archivo de accion a ejecutar
@@ -109,6 +107,7 @@
 			{
 				//tratamos de obtener el usuario a partir del token
 				require_once "includes/actions/get/getIdUsuario.inc.php";
+
 			}
 			//si no hay error al obtener el id_usuario
 			if (!isset($json["error_msg"]))
@@ -133,7 +132,43 @@
 	//si no hay error, establecemos el resultado en true, sino en false
 	$json["result"]=!isset($json["error_msg"]);
 	//codificamos el json para mostrarlo en el navegador
-	$json = json_encode($json);
+
+	// Guardamos una copia de los datos originales
+	$originalData = $json;
+
+	try {
+		// Primero intentamos con todas las opciones
+		$jsonString = json_encode($originalData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+		// Si json_encode devuelve false, intentamos con menos opciones
+		if ($jsonString === false) {
+			error_log("Error en la codificación JSON avanzada: " . json_last_error_msg());
+			$jsonString = json_encode($originalData);
+
+			// Si sigue fallando, intentamos limpiar los datos
+			if ($jsonString === false) {
+				error_log("Error en la codificación JSON básica: " . json_last_error_msg());
+
+				// Limpiar los datos y volver a intentar
+				$cleanedData = cleanForJson($originalData);
+				$jsonString = json_encode($cleanedData);
+
+				// Si aún falla, devolvemos un mensaje de error simple
+				if ($jsonString === false) {
+					error_log("Error fatal en la codificación JSON: " . json_last_error_msg());
+					$jsonString = '{"result":false,"error_msg":"Error interno del servidor al procesar la respuesta"}';
+				}
+			}
+		}
+
+		// Asignamos el resultado a $json para mantener compatibilidad
+		$json = $jsonString;
+	}
+	// Si hay una excepción, devolvemos un mensaje de error simple
+	catch (Exception $e) {
+		error_log("Excepción en la codificación JSON: " . $e->getMessage());
+		$json = '{"result":false,"error_msg":"Error interno del servidor"}';
+	}
 
 	header('Content-Type: application/json; charset=utf-8');
 	header('Content-Length: ' . strlen($json));// longitud del JSON.
