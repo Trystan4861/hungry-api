@@ -251,20 +251,74 @@ class Usuario {
     }
     /**
      * setSupermercadosOcultos
-     * Actualiza la lista de supermercados ocultos para el usuario
+     * Actualiza la lista de supermercados ocultos para el usuario en la tabla usuarios_supermercados
      * @param array $data Datos con los supermercados a ocultar
      * @return mixed Usuario actualizado o null en caso de error
      */
     public function setSupermercadosOcultos($data){
-        if (is_array($data["supermercados_ocultos"]))
-            $data["supermercados_ocultos"] = implode(",", $data["supermercados_ocultos"]);
-        else if ($data["supermercados_ocultos"]==null)
-            $data["supermercados_ocultos"]="-1";
-        $consulta=$this->DAO->prepare("UPDATE usuarios SET supermercados_ocultos = :supermercados_ocultos WHERE id = :id");
-        $consulta->bindValue(":supermercados_ocultos", $data["supermercados_ocultos"]);
-        $consulta->bindValue(":id", $this->user["id"]);
-        $consulta->execute();
-        return $this->load($this->user["token"]);
+        try {
+            // Comenzamos una transacción para asegurar la integridad de los datos
+            $this->DAO->beginTransaction();
+
+            // Convertimos los datos a un array si no lo son
+            $supermercados = $data["supermercados_ocultos"];
+            if (!is_array($supermercados)) {
+                if ($supermercados === null || $supermercados === "") {
+                    $supermercados = [];
+                } else {
+                    $supermercados = explode(",", $supermercados);
+                }
+            }
+
+            // Primero, establecemos todos los supermercados como visibles para este usuario
+            $sql = "UPDATE usuarios_supermercados SET visible = 1 WHERE fk_id_usuario = :id_usuario";
+            $consulta = $this->DAO->prepare($sql);
+            $consulta->bindValue(":id_usuario", $this->user["id"]);
+            $consulta->execute();
+
+            // Luego, para cada supermercado en la lista, lo marcamos como oculto (visible = 0)
+            if (!empty($supermercados) && $supermercados[0] != "-1") {
+                foreach ($supermercados as $id_supermercado) {
+                    // Verificamos si ya existe una relación para este usuario y supermercado
+                    $sql = "SELECT id FROM usuarios_supermercados
+                            WHERE fk_id_usuario = :id_usuario AND fk_id_supermercado = :id_supermercado";
+                    $consulta = $this->DAO->prepare($sql);
+                    $consulta->bindValue(":id_usuario", $this->user["id"]);
+                    $consulta->bindValue(":id_supermercado", $id_supermercado);
+                    $consulta->execute();
+                    $existe = $consulta->fetch(PDO::FETCH_ASSOC);
+
+                    if ($existe) {
+                        // Si existe, actualizamos su visibilidad
+                        $sql = "UPDATE usuarios_supermercados SET visible = 0
+                                WHERE fk_id_usuario = :id_usuario AND fk_id_supermercado = :id_supermercado";
+                        $consulta = $this->DAO->prepare($sql);
+                        $consulta->bindValue(":id_usuario", $this->user["id"]);
+                        $consulta->bindValue(":id_supermercado", $id_supermercado);
+                        $consulta->execute();
+                    } else {
+                        // Si no existe, creamos un nuevo registro
+                        $sql = "INSERT INTO usuarios_supermercados (fk_id_usuario, fk_id_supermercado, visible)
+                                VALUES (:id_usuario, :id_supermercado, 0)";
+                        $consulta = $this->DAO->prepare($sql);
+                        $consulta->bindValue(":id_usuario", $this->user["id"]);
+                        $consulta->bindValue(":id_supermercado", $id_supermercado);
+                        $consulta->execute();
+                    }
+                }
+            }
+
+            // Confirmamos la transacción
+            $this->DAO->commit();
+
+            // Devolvemos el usuario actualizado
+            return $this->load($this->user["token"]);
+        } catch (PDOException $e) {
+            // Si hay un error, revertimos la transacción
+            $this->DAO->rollBack();
+            error_log("Error al actualizar supermercados ocultos: " . $e->getMessage());
+            return $this->returnError($e->getMessage());
+        }
     }
     /**
      * sendValidationEmail
@@ -443,8 +497,33 @@ class Usuario {
         return $this->error_msg;
     }
 
+    /**
+     * getSupermercadosOcultos
+     * Obtiene la lista de supermercados ocultos para el usuario desde la tabla usuarios_supermercados
+     * @return string Lista de IDs de supermercados ocultos separados por comas, o "-1" si no hay ninguno
+     */
     public function getSupermercadosOcultos(){
-        return isset($this->user["supermercados_ocultos"]) ? $this->user["supermercados_ocultos"] : "-1";
+        if (!isset($this->user["id"])) {
+            return "-1";
+        }
+
+        try {
+            $sql = "SELECT fk_id_supermercado FROM usuarios_supermercados
+                    WHERE fk_id_usuario = :id_usuario AND visible = 0";
+            $consulta = $this->DAO->prepare($sql);
+            $consulta->bindValue(":id_usuario", $this->user["id"]);
+            $consulta->execute();
+            $result = $consulta->fetchAll(PDO::FETCH_COLUMN);
+
+            if (empty($result)) {
+                return "-1";
+            }
+
+            return implode(",", $result);
+        } catch (PDOException $e) {
+            error_log("Error al obtener supermercados ocultos: " . $e->getMessage());
+            return "-1";
+        }
     }
 
     public function getLog(){
