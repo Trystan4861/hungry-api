@@ -5,4 +5,3 @@
     global $env;
     return JWT::encode($data["pass"].$data["microtime"], $env["SECRET_KEY"]);
   }
-

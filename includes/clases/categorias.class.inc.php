@@ -53,16 +53,21 @@ class Categorias {
         return $this->setResult($consulta->fetchAll(PDO::FETCH_ASSOC));
     }
 
+    /**
+     * updateCategoriaText
+     * Actualiza el texto de una categoría
+     * @param int $idCategoria ID de la categoría a actualizar
+     * @param string $text Nuevo texto para la categoría
+     * @return mixed Categoría actualizada o null en caso de error
+     */
     public function updateCategoriaText($idCategoria,$text)
     {
         try
         {
-            $timestamp = time(); // Timestamp en segundos
-            $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `text`=:text, `timestamp`=:timestamp WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+            $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `text`=:text WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
             $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
             $consulta->bindParam(":text", $text, PDO::PARAM_STR);
             $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
-            $consulta->bindParam(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
             return $this->loadCategoria($idCategoria);
         }
@@ -71,16 +76,21 @@ class Categorias {
             return $this->returnError($e->getMessage());
         }
     }
+    /**
+     * updateCategoriaVisible
+     * Actualiza la visibilidad de una categoría
+     * @param int $idCategoria ID de la categoría a actualizar
+     * @param int $visible Estado de visibilidad (1 o 0)
+     * @return mixed Categoría actualizada o null en caso de error
+     */
     public function updateCategoriaVisible($idCategoria,$visible)
     {
         try
         {
-            $timestamp = time(); // Timestamp en segundos
-            $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `visible`=:visible, `timestamp`=:timestamp WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+            $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `visible`=:visible WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
             $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
             $consulta->bindParam(":visible", $visible, PDO::PARAM_INT);
             $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
-            $consulta->bindParam(":timestamp", $timestamp, PDO::PARAM_INT);
             $consulta->execute();
             return $this->loadCategoria($idCategoria);
         }
