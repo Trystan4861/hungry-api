@@ -258,9 +258,17 @@ class Usuario {
         $consulta->execute();
         return $this->load($this->user["token"]);
     }
+    /**
+     * sendValidationEmail
+     * Envía un correo electrónico de validación al usuario
+     * @param string $email Correo electrónico del usuario
+     * @param string $token Token de verificación
+     * @return void
+     */
     public function sendValidationEmail($email, $token){
         $subject = "Valida tu cuenta en ".APP_NAME;
-        $message = "Para validar tu cuenta en ".APP_NAME." haz click en el siguiente enlace:\n\n".APP_URL."validate/$token";
+        $verification_link = APP_URL . "verifyMail?mail=" . urlencode($email) . "&verify_key=" . $token;
+        $message = "Para validar tu cuenta en ".APP_NAME." haz click en el siguiente enlace:\n\n".$verification_link;
         $headers = "From: ".APP_EMAIL;
         mail($email, $subject, $message, $headers);
     }

@@ -10,7 +10,7 @@
 
 	// Cargamos las variables de entorno desde el archivo .env
 	$env = parse_ini_file(ROOT.'.env', true);
-	
+
 	// Definimos las constantes de la aplicación desde la sección [APP] del archivo .env
 	define('APP_NAME', $env['APP']['NAME']);
 	define('APP_URL', $env['APP']['API_URL']);
@@ -35,7 +35,7 @@
 
 	require_once ROOT."includes/loader.inc.php";
 
-	$NoAuthActions=["login","register","test"];
+	$NoAuthActions=["login","register","test","verifyMail"];
 
 	if (!isset($json["error_msg"]))
 	{
