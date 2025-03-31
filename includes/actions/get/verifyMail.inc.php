@@ -93,7 +93,6 @@ function mostrarPaginaHTML($titulo, $mensaje, $tipo = 'success') {
                 <h2>' . htmlspecialchars($titulo) . '</h2>
                 <p>' . htmlspecialchars($mensaje) . '</p>
             </div>
-            <a href="' . APP_URL . '" class="button">Ir a la página principal</a>
         </div>
     </body>
     </html>';
@@ -157,8 +156,14 @@ try {
 
     // Si se proporciona una clave de verificación
     if (isset($data['verify_key']) && !empty($data['verify_key'])) {
+        // Registramos información para depuración
+        error_log("Verificando correo: $email con clave: " . $data['verify_key']);
+        error_log("Token almacenado en BD: " . $user_data['token']);
+
         // Verificamos si la clave coincide con el token almacenado
         if ($data['verify_key'] === $user_data['token']) {
+            error_log("¡Verificación exitosa! Los tokens coinciden.");
+
             // Actualizamos el estado de verificación del usuario
             $sql = "UPDATE usuarios SET verified = 1 WHERE id = :id";
             $consulta = $DAO->prepare($sql);
@@ -172,6 +177,10 @@ try {
                 mostrarPaginaHTML("Verificación exitosa", "¡Tu correo electrónico ha sido verificado correctamente! Ahora puedes iniciar sesión en la aplicación.", "success");
             }
         } else {
+            error_log("¡Verificación fallida! Los tokens no coinciden.");
+            error_log("Token recibido: " . $data['verify_key']);
+            error_log("Token en BD: " . $user_data['token']);
+
             if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
                 $json["result"] = false;
                 $json["error_msg"] = $msgerrors["token_error"];
@@ -182,28 +191,63 @@ try {
     }
     // Si no se proporciona una clave de verificación, generamos una y enviamos el correo
     else {
-        // Generamos un nuevo token para la verificación
-        $microtime = microtime(true);
-        $verify_key = md5($email . $microtime . rand(1000, 9999));
+        // Verificamos si el usuario ya tiene un token
+        if (!empty($user_data['token'])) {
+            error_log("El usuario ya tiene un token: " . $user_data['token']);
+            $stored_token = $user_data['token'];
+        } else {
+            // Generamos un nuevo token para la verificación
+            $microtime = microtime(true);
+            $data["microtime"] = $microtime;
+            $data["pass"] = $user_data['pass'];
 
-        // Guardamos el token en la base de datos
-        $sql = "UPDATE usuarios SET token = :token, microtime = :microtime WHERE id = :id";
-        $consulta = $DAO->prepare($sql);
-        $consulta->bindValue(":token", $verify_key);
-        $consulta->bindValue(":microtime", $microtime);
-        $consulta->bindValue(":id", $user_data['id']);
-        $consulta->execute();
+            // Generamos el token y lo guardamos en una variable
+            $verify_key = generate_token($data);
 
-        // Preparamos el enlace de verificación
-        $verification_link = APP_URL . "verifyMail?mail=" . urlencode($email) . "&verify_key=" . $verify_key;
+            // Registramos información para depuración
+            error_log("Generando token de verificación para $email con microtime: $microtime");
+            error_log("Token generado: $verify_key");
+
+            // Guardamos el token en la base de datos
+            $sql = "UPDATE usuarios SET token = :token, microtime = :microtime WHERE id = :id";
+            $consulta = $DAO->prepare($sql);
+            $consulta->bindValue(":token", $verify_key);
+            $consulta->bindValue(":microtime", $microtime);
+            $consulta->bindValue(":id", $user_data['id']);
+            $consulta->execute();
+
+            // Verificamos que el token se haya guardado correctamente
+            $sql = "SELECT token FROM usuarios WHERE id = :id";
+            $consulta = $DAO->prepare($sql);
+            $consulta->bindValue(":id", $user_data['id']);
+            $consulta->execute();
+            $stored_token = $consulta->fetchColumn();
+
+            error_log("Token almacenado en la base de datos: $stored_token");
+
+            // Verificamos que los tokens coincidan
+            if ($verify_key !== $stored_token) {
+                error_log("¡ADVERTENCIA! El token generado ($verify_key) no coincide con el almacenado ($stored_token)");
+            }
+        }
+
+        // Preparamos el enlace de verificación usando el token almacenado en la base de datos
+        $verification_link = APP_URL . "verifyMail?mail=" . urlencode($email) . "&verify_key=" . $stored_token;
 
         // Enviamos el correo de verificación usando la función existente
         try {
             // Creamos una instancia de Usuario para enviar el correo
             $user_obj = new Usuario();
 
-            // Enviamos el correo de verificación usando la función existente
-            $user_obj->sendValidationEmail($email, $verify_key);
+            // Enviamos el correo de verificación usando el token almacenado
+            $result = $user_obj->sendValidationEmail($email, $stored_token);
+
+            // Registramos el resultado del envío
+            if ($result) {
+                error_log("Correo de verificación enviado correctamente a: $email con token: $stored_token");
+            } else {
+                error_log("Error al enviar correo de verificación a: $email");
+            }
 
             if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
                 $json["result"] = true;

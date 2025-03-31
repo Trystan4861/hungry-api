@@ -5,7 +5,7 @@
 	//definimos la constante API_VERSION_NUMBER
 	define('API_VERSION_NUMBER', "1.0");
 	//definimos la constante MUST_VALIDATE que controlará si se obligará a validar los correos electrónicos de los usuarios
-	define('MUST_VALIDATE',false);
+	define('MUST_VALIDATE',true);
 	//lanzamos el cargador de configuraciones, clases y funciones
 
 	// Cargamos las variables de entorno desde el archivo .env
@@ -32,7 +32,6 @@
 		header('Content-Type: text/plain');
 		exit(0);
 	}
-
 	require_once ROOT."includes/loader.inc.php";
 
 	$NoAuthActions=["login","register","test","verifyMail"];

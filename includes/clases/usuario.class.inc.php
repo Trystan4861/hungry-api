@@ -66,61 +66,69 @@ class Usuario {
                 }
                 // Si tenemos token, es una carga por token (posiblemente con fingerid)
                 else if (isset($data["token"])) {
-                    $sql = "SELECT * FROM usuarios WHERE token = `:token`";
+                    $sql = "SELECT * FROM usuarios WHERE token = :token";
                     $consulta = $this->DAO->prepare($sql);
-                    $consulta->bindValue(":token", $data["token"]);
+                    $consulta->bindValue(":token", $data["token"], PDO::PARAM_STR);
+                    error_log("Buscando usuario con token: " . $data["token"]);
                 }
             } else {
                 // Si es un string, asumimos que es un token
                 $sql = "SELECT * FROM usuarios WHERE token = :token";
                 $consulta = $this->DAO->prepare($sql);
                 $consulta->bindValue(":token", $data, PDO::PARAM_STR);
+                error_log("Buscando usuario con token (string): " . $data);
             }
-            $consulta->execute();
-            $usuario = $consulta->fetch(PDO::FETCH_ASSOC);
-            if ($usuario) {
-                $this->device=0;
-                if (isset($data["fingerid"]))
-                {
-                    try
-                    {
+            // Ejecutamos la consulta y capturamos posibles errores
+            try {
+                $consulta->execute();
+                $usuario = $consulta->fetch(PDO::FETCH_ASSOC);
 
-                        // Ahora procedemos con la consulta normal
-                        $sql="SELECT COALESCE(MAX(id), NULL) AS id,
-                        COALESCE(MAX(fk_id_usuario), :id) AS fk_id_usuario,
-                        COALESCE(MAX(fingerID), NULL) AS fingerID,
-                        (SELECT COUNT(*) FROM usuarios_devices WHERE fk_id_usuario = :id) AS total_registros
-                        FROM usuarios_devices
-                        WHERE fk_id_usuario = :id AND fingerID = :fingerID;";
-                        $consulta=$this->DAO->prepare($sql);
-                        $consulta->bindValue(":id", $usuario["id"]);
-                        $consulta->bindValue(":fingerID", $data["fingerid"]);
-                        $consulta->execute();
-                        $result=$consulta->fetch(PDO::FETCH_ASSOC);
-                        if ($result["id"]==null)
-                        {
-                            $sql="INSERT INTO usuarios_devices (fk_id_usuario, fingerID, is_master) VALUES (:id, :fingerID, :is_master)";
-                            $consulta=$this->DAO->prepare($sql);
+                if ($usuario) {
+                    error_log("Usuario encontrado con ID: " . $usuario["id"] . " y email: " . $usuario["email"]);
+
+                    $this->device = 0;
+                    if (isset($data["fingerid"])) {
+                        try {
+                            // Ahora procedemos con la consulta normal
+                            $sql = "SELECT COALESCE(MAX(id), NULL) AS id,
+                            COALESCE(MAX(fk_id_usuario), :id) AS fk_id_usuario,
+                            COALESCE(MAX(fingerID), NULL) AS fingerID,
+                            (SELECT COUNT(*) FROM usuarios_devices WHERE fk_id_usuario = :id) AS total_registros
+                            FROM usuarios_devices
+                            WHERE fk_id_usuario = :id AND fingerID = :fingerID;";
+                            $consulta = $this->DAO->prepare($sql);
                             $consulta->bindValue(":id", $usuario["id"]);
                             $consulta->bindValue(":fingerID", $data["fingerid"]);
-                            $consulta->bindValue(":is_master", $result["total_registros"]==0?1:0, PDO::PARAM_BOOL);
                             $consulta->execute();
-                            $result["id"]= $this->DAO->lastInsertId();
+                            $result = $consulta->fetch(PDO::FETCH_ASSOC);
+                            if ($result["id"] == null) {
+                                $sql = "INSERT INTO usuarios_devices (fk_id_usuario, fingerID, is_master) VALUES (:id, :fingerID, :is_master)";
+                                $consulta = $this->DAO->prepare($sql);
+                                $consulta->bindValue(":id", $usuario["id"]);
+                                $consulta->bindValue(":fingerID", $data["fingerid"]);
+                                $consulta->bindValue(":is_master", $result["total_registros"] == 0 ? 1 : 0, PDO::PARAM_BOOL);
+                                $consulta->execute();
+                                $result["id"] = $this->DAO->lastInsertId();
+                            }
+                            $this->device = $result["id"];
+                        } catch (PDOException $e) {
+                            $this->log["error"] = $e->getMessage();
+                            error_log("Error en Usuario::load con fingerID: " . $e->getMessage());
+                            // No fallamos completamente, solo registramos el error y continuamos
+                            $this->device = 0;
                         }
-                        $this->device = $result["id"];
                     }
-                    catch (PDOException $e)
-                    {
-                        $this->log["error"]=$e->getMessage();
-                        error_log("Error en Usuario::load con fingerID: " . $e->getMessage());
-                        // No fallamos completamente, solo registramos el error y continuamos
-                        $this->device = 0;
-                    }
+
+                    $this->user = $usuario;
+                    $this->is_done = true;
+                    return $this->user['id'];
+                } else {
+                    error_log("No se encontró ningún usuario con los criterios de búsqueda");
+                    $this->is_done = false;
+                    return null;
                 }
-                $this->user = $usuario;
-                $this->is_done = true;
-                return $this->user['id'];
-            } else {
+            } catch (PDOException $e) {
+                error_log("Error en la consulta SQL en Usuario::load: " . $e->getMessage());
                 $this->is_done = false;
                 return null;
             }
@@ -263,20 +271,134 @@ class Usuario {
      * Envía un correo electrónico de validación al usuario
      * @param string $email Correo electrónico del usuario
      * @param string $token Token de verificación
-     * @return void
+     * @return bool True si el correo se envió correctamente, False en caso contrario
      */
     public function sendValidationEmail($email, $token){
         $subject = "Valida tu cuenta en ".APP_NAME;
         $verification_link = APP_URL . "verifyMail?mail=" . urlencode($email) . "&verify_key=" . $token;
-        $message = "Para validar tu cuenta en ".APP_NAME." haz click en el siguiente enlace:\n\n".$verification_link;
-        $headers = "From: ".APP_EMAIL;
-        mail($email, $subject, $message, $headers);
+
+        // Crear mensaje en formato HTML
+        $htmlMessage = "
+        <!DOCTYPE html>
+        <html lang='es'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Verificación de cuenta</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    margin: 0;
+                    padding: 20px;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #f9f9f9;
+                    border-radius: 5px;
+                    padding: 20px;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .content {
+                    background-color: #fff;
+                    border-radius: 5px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                }
+                .button {
+                    display: inline-block;
+                    background-color: lightgreen;
+                    color: white !important;
+                    font-weight: bold;
+                    text-decoration: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .footer {
+                    text-align: center;
+                    font-size: 12px;
+                    color: #777;
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>".APP_NAME."</h1>
+                </div>
+                <div class='content'>
+                    <h2>Verificación de cuenta</h2>
+                    <p>Gracias por registrarte en ".APP_NAME.".</p>
+                    <p>Para validar tu cuenta, haz clic en el siguiente botón:</p>
+                    <p style='text-align: center;'>
+                        <a href='".$verification_link."' class='button'>Verificar mi cuenta</a>
+                    </p>
+                    <p>O copia y pega el siguiente enlace en tu navegador:</p>
+                    <p>".$verification_link."</p>
+                </div>
+                <div class='footer'>
+                    <p>Este correo fue enviado automáticamente. Por favor, no respondas a este mensaje.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+        // Mensaje de texto plano como alternativa
+        $textMessage = "Para validar tu cuenta en ".APP_NAME." haz click en el siguiente enlace:\n\n".$verification_link;
+
+        try {
+            // Intentamos enviar el correo
+            $result = sendMail($email, isset($this->user["nombre"]) ? $this->user["nombre"] : "Usuario", $subject, $htmlMessage, $textMessage);
+
+            // Registramos el resultado
+            if ($result) {
+                error_log("Correo de verificación enviado correctamente a: $email");
+                return true;
+            } else {
+                error_log("Error al enviar correo de verificación a: $email");
+                $this->log["error"] = "Error al enviar correo de verificación";
+                return false;
+            }
+        }
+        catch(Exception $e){
+            error_log("Excepción al enviar correo de verificación a $email: ".$e->getMessage());
+            $this->log["error"] = "Error enviando email de validación: ".$e->getMessage();
+            return false;
+        }
     }
+    /**
+     * validateUser
+     * Valida un usuario utilizando su correo electrónico y token
+     * @param string $email Correo electrónico del usuario
+     * @param string $token Token de verificación
+     * @return bool True si la validación fue exitosa, False en caso contrario
+     */
     public function validateUser($email, $token){
+        // Registramos información para depuración
+        error_log("Intentando validar usuario con email: $email y token: $token");
+
+        // Intentamos cargar el usuario con el token proporcionado
         $this->load($token);
-        if ($this->user["email"]==$email)
-        {
+
+        // Verificamos si se cargó el usuario y si el correo coincide
+        if ($this->isLoaded() && $this->user["email"] == $email) {
+            error_log("Usuario cargado correctamente. Procediendo a verificar.");
             $this->verifyUser();
+            return true;
+        } else {
+            error_log("Error al validar usuario. Token inválido o correo no coincidente.");
+            if ($this->isLoaded()) {
+                error_log("Usuario cargado pero el correo no coincide. Email en BD: " . $this->user["email"]);
+            } else {
+                error_log("No se pudo cargar el usuario con el token proporcionado.");
+            }
+            return false;
         }
     }
     public function getLastResult() {
@@ -295,12 +417,26 @@ class Usuario {
         return isset($this->user["id"]) ? $this->user["id"] : null;
     }
 
-    public function getUser() {
-        return $this->user;
+    /**
+     * getToken
+     * Obtiene el token del usuario actual
+     * @return string|null Token del usuario o null si no está cargado
+     */
+    public function getToken() {
+        return isset($this->user["token"]) ? $this->user["token"] : null;
     }
 
-    public function isLoaded(){
-        return $this->user != null;
+    /**
+     * isLoaded
+     * Verifica si el usuario está cargado
+     * @return bool True si el usuario está cargado, False en caso contrario
+     */
+    public function isLoaded() {
+        return isset($this->user) && !empty($this->user) && isset($this->user["id"]);
+    }
+
+    public function getUser() {
+        return $this->user;
     }
 
     public function getErrorMsg() {

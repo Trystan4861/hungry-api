@@ -28,6 +28,45 @@ function writeLog($message, $level = 'INFO') {
 }
 
 /**
+ * checkNullValues
+ * Verifica si algún valor en los argumentos dados es nulo o indefinido.
+ *
+ * @param array $data Arreglo asociativo que contiene los valores a verificar.
+ * @param mixed ...$args Lista variable de nombres de claves en el arreglo `$data` que se deben verificar.
+ * @return bool Devuelve `true` si alguno de los valores especificados es nulo o indefinido; de lo contrario, devuelve `false`.
+ */
+function checkNullValues($data,...$args) {
+    foreach ($args as $arg) {
+        if (!isset($data[$arg]) || $data[$arg] === null) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * validate_email
+ * Valida un email dado contra una expresión regular
+ * @param string $email Email a validar
+ * @return boolean True si el email es válido, False en caso contrario
+ */
+function validate_email($email) {
+    $pattern = "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/";
+    return preg_match($pattern, $email);
+}
+
+/**
+ * validate_password
+ * Valida una contraseña dada contra una expresión regular
+ * @param string $password Contraseña a validar
+ * @return boolean True si la contraseña es válida, False en caso contrario
+ */
+function validate_password($password) {
+    $pattern = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/";
+    return preg_match($pattern, $password);
+}
+
+/**
  * formatException
  * Formatea una excepción para el log
  * @param Exception $e Excepción a formatear

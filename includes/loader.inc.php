@@ -1,10 +1,9 @@
 <?php
-  $env=parse_ini_file(ROOT.'.env');
-
   $FTO=array(
     "config"              =>  "includes/config/config.inc.php",
     "config.utf8"         =>  "includes/config/config.utf8.inc.php",
     "config.db"           =>  "includes/config/config.db.inc.php",
+    "config.mail"         =>  "includes/config/config.mail.inc.php",
     "usuario.class"       =>  "includes/clases/usuario.class.inc.php",
     "categorias.class"    =>  "includes/clases/categorias.class.inc.php",
     "productos.class"     =>  "includes/clases/productos.class.inc.php",
