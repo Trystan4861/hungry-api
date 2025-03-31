@@ -158,17 +158,12 @@ try {
     if (isset($data['verify_key']) && !empty($data['verify_key'])) {
         // Registramos información para depuración
         error_log("Verificando correo: $email con clave: " . $data['verify_key']);
-        error_log("Token almacenado en BD: " . $user_data['token']);
 
-        // Verificamos si la clave coincide con el token almacenado
-        if ($data['verify_key'] === $user_data['token']) {
-            error_log("¡Verificación exitosa! Los tokens coinciden.");
+        // Utilizamos el método validateUser de la clase Usuario para verificar el usuario
+        $result = $usuario->validateUser($email, $data['verify_key']);
 
-            // Actualizamos el estado de verificación del usuario
-            $sql = "UPDATE usuarios SET verified = 1 WHERE id = :id";
-            $consulta = $DAO->prepare($sql);
-            $consulta->bindValue(":id", $user_data['id']);
-            $consulta->execute();
+        if ($result) {
+            error_log("¡Verificación exitosa! Usuario verificado correctamente.");
 
             if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
                 $json["result"] = true;
@@ -177,9 +172,7 @@ try {
                 mostrarPaginaHTML("Verificación exitosa", "¡Tu correo electrónico ha sido verificado correctamente! Ahora puedes iniciar sesión en la aplicación.", "success");
             }
         } else {
-            error_log("¡Verificación fallida! Los tokens no coinciden.");
-            error_log("Token recibido: " . $data['verify_key']);
-            error_log("Token en BD: " . $user_data['token']);
+            error_log("¡Verificación fallida! No se pudo verificar el usuario.");
 
             if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
                 $json["result"] = false;

@@ -44,6 +44,7 @@
 			"user_error"=>"Correo electrónico o contraseña incorrectos",
 			"email_error"=>"El correo electrónico ya registrado, use otro o inicie sesión con el mismo",
 			"register_validate"=>"Registro completado, revise su correo electrónico para validar su cuenta",
+			"register_must_validate"=>"Usuario existente, falta verificar su cuenta. Revise su correo electrónico para validar su cuenta",
 			"token_error"=>"Token incorrecto",
 			"login_error"=>"Faltan datos",
 			"verified_error"=>"Correo electrónico no verificado",

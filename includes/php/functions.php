@@ -62,8 +62,8 @@ function validate_email($email) {
  * @return boolean True si la contraseña es válida, False en caso contrario
  */
 function validate_password($password) {
-    $pattern = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/";
-    return preg_match($pattern, $password);
+    // La contraseña debe ser un string MD5 de 32 caracteres
+    return (strlen($password) == 32 && ctype_xdigit($password));
 }
 
 /**

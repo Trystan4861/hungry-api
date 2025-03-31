@@ -41,10 +41,13 @@
             $consulta->bindValue(":microtime", $data["microtime"]);
             $consulta->bindValue(":email", strtolower(trim($data["email"])));
             $consulta->execute();
+            $json["error_msg"] = $msgerrors["register_validate"];
+          }
+          else {
+            $json["error_msg"] = $msgerrors["register_must_validate"];
           }
 
           $user->sendValidationEmail($data["email"], $token);
-          $json["error_msg"] = $msgerrors["register_validate"];
         }
         else {
           $json["error_msg"] = $msgerrors["email_error"];
