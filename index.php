@@ -8,11 +8,15 @@
 	define('MUST_VALIDATE',false);
 	//lanzamos el cargador de configuraciones, clases y funciones
 
-	define('APP_NAME', "Hungry by @trystan4861");
-	define('APP_URL', "https://www.infoinnova.es/lolo/api/");
-	define('APP_EMAIL', "hungry.by.trystan4861@gmail.com");
+	// Cargamos las variables de entorno desde el archivo .env
+	$env = parse_ini_file(ROOT.'.env', true);
+	
+	// Definimos las constantes de la aplicación desde la sección [APP] del archivo .env
+	define('APP_NAME', $env['APP']['NAME']);
+	define('APP_URL', $env['APP']['API_URL']);
+	define('APP_EMAIL', $env['APP']['EMAIL_USER']);
 	define('APP_EMAIL_NAME', APP_NAME);
-	define('APP_EMAIL_PASSWORD', "uhuk kbrc rbmr dfcy");
+	define('APP_EMAIL_PASSWORD', $env['APP']['EMAIL_PASS']);
 
 	// Establecemos los encabezados CORS para todas las respuestas, incluidas las solicitudes OPTIONS
 	header('Access-Control-Allow-Credentials: true'); // true para permitir credenciales de usuario.
