@@ -38,7 +38,7 @@ class Categorias {
     }
 
     public function loadCategoria($idCategoria) {
-        $consulta = $this->DAO->prepare("SELECT uc.`fk_id_categoria` as id_categoria, uc.`text`, c.`bgColor`, uc.`visible` FROM categorias as c, usuarios_categorias as uc where uc.`fk_id_categoria`=c.`id` and c.`id`=:idCategoria and uc.`fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT uc.`fk_id_categoria` as id_categoria, uc.`text`, c.`bgColor`, uc.`visible`, uc.`timestamp` FROM categorias as c, usuarios_categorias as uc where uc.`fk_id_categoria`=c.`id` and c.`id`=:idCategoria and uc.`fk_id_usuario`=:userId");
         $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
         $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
@@ -47,12 +47,19 @@ class Categorias {
 
 
     public function getCategorias() {
-        $consulta = $this->DAO->prepare("SELECT uc.`fk_id_categoria` as id_categoria, uc.`text`, c.`bgColor`, uc.`visible` FROM categorias as c, usuarios_categorias as uc where uc.`fk_id_categoria`=c.`id` and uc.`fk_id_usuario`=:userId");
+        $consulta = $this->DAO->prepare("SELECT uc.`fk_id_categoria` as id_categoria, uc.`text`, c.`bgColor`, uc.`visible`, uc.`timestamp` FROM categorias as c, usuarios_categorias as uc where uc.`fk_id_categoria`=c.`id` and uc.`fk_id_usuario`=:userId");
         $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
         $consulta->execute();
         return $this->setResult($consulta->fetchAll(PDO::FETCH_ASSOC));
     }
 
+    /**
+     * updateCategoriaText
+     * Actualiza el texto de una categoría
+     * @param int $idCategoria ID de la categoría a actualizar
+     * @param string $text Nuevo texto para la categoría
+     * @return mixed Categoría actualizada o null en caso de error
+     */
     public function updateCategoriaText($idCategoria,$text)
     {
         try
@@ -69,14 +76,28 @@ class Categorias {
             return $this->returnError($e->getMessage());
         }
     }
+    /**
+     * updateCategoriaVisible
+     * Actualiza la visibilidad de una categoría
+     * @param int $idCategoria ID de la categoría a actualizar
+     * @param int $visible Estado de visibilidad (1 o 0)
+     * @return mixed Categoría actualizada o null en caso de error
+     */
     public function updateCategoriaVisible($idCategoria,$visible)
     {
-        $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `visible`=:visible WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
-        $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
-        $consulta->bindParam(":visible", $visible, PDO::PARAM_INT);
-        $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
-        $consulta->execute();
-        return $this->loadCategoria($idCategoria);
+        try
+        {
+            $consulta = $this->DAO->prepare("UPDATE usuarios_categorias SET `visible`=:visible WHERE `fk_id_categoria`=:idCategoria and `fk_id_usuario`=:userId");
+            $consulta->bindParam(":idCategoria", $idCategoria, PDO::PARAM_INT);
+            $consulta->bindParam(":visible", $visible, PDO::PARAM_INT);
+            $consulta->bindParam(":userId", $this->userId, PDO::PARAM_INT);
+            $consulta->execute();
+            return $this->loadCategoria($idCategoria);
+        }
+        catch (PDOException $e)
+        {
+            return $this->returnError($e->getMessage());
+        }
     }
 
     public function getLastResult()

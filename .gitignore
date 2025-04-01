@@ -38,3 +38,8 @@ coverage/
 /.htaccess
 /.wakatime-project
 *.code-workspace
+
+#archivos temporales
+*.tmp
+*.bak
+*.new
