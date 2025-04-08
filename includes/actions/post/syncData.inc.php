@@ -1,47 +1,10 @@
 <?php
-/**
- * syncData.inc.php
- * Endpoint para sincronización bidireccional de datos entre la aplicación nHungry y el servidor
- *
- * Este endpoint recibe los datos del cliente, los combina con los datos del servidor
- * según reglas específicas, y devuelve los datos actualizados.
- *
- * @param array $data Datos recibidos del cliente
- * @return array Datos sincronizados
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-/**
- * Escribe un mensaje en el log
- * @param string $message Mensaje a loguear
- * @param string $type Tipo de mensaje (ERROR, INFO, DEBUG)
- */
-function writeLog($message, $type = 'ERROR') {
-    $logFile = __DIR__ . '/error_log';
-    $timestamp = date('Y-m-d H:i:s');
-    $formattedMessage = "[$timestamp][$type] $message\n";
-    error_log($formattedMessage, 3, $logFile);
-}
-
-/**
- * Formatea una excepción para el log
- * @param Exception $e Excepción a formatear
- * @return string Mensaje formateado
- */
-function formatException($e) {
-    return sprintf(
-        "Exception: %s\nFile: %s\nLine: %d\nTrace:\n%s",
-        $e->getMessage(),
-        $e->getFile(),
-        $e->getLine(),
-        $e->getTraceAsString()
-    );
-}
 
 // Log de datos recibidos
-writeLog("Datos recibidos: " . print_r($data, true), 'INFO');
 
 /**
  * sincronizarCategorias
@@ -68,13 +31,18 @@ function sincronizarCategorias($categorias, $clientCategorias) {
     foreach ($clientCategorias as $clientCategoria) {
         $id = $clientCategoria['id'];
 
-        // Convertir el timestamp a segundos si está en milisegundos
-        $clientTimestamp = isset($clientCategoria['timestamp']) ?
-            (strlen((string)$clientCategoria['timestamp']) > 10 ?
-                floor($clientCategoria['timestamp'] / 1000) :
-                $clientCategoria['timestamp']) :
-            0;
-
+        //comprobar si el timestamp es una cadena en formato ISO8601
+        //si es así, convertirlo a timestamp
+        if (is_string($clientCategoria['timestamp']) && strtotime($clientCategoria['timestamp']) !== false) {
+            $clientTimestamp= strtotime($clientCategoria['timestamp']);
+        }
+        else{ // Convertir el timestamp a segundos si está en milisegundos
+            $clientTimestamp = isset($clientCategoria['timestamp']) ?
+                (strlen((string)$clientCategoria['timestamp']) > 10 ?
+                    floor($clientCategoria['timestamp'] / 1000) :
+                    $clientCategoria['timestamp']) :
+                0;
+        }
         // Si la categoría existe en el servidor
         if (isset($serverCategoriasMap[$id])) {
             $serverCategoria = $serverCategoriasMap[$id];
@@ -92,7 +60,7 @@ function sincronizarCategorias($categorias, $clientCategorias) {
                     'text' => $clientCategoria['text'],
                     'bgColor' => $serverCategoria['bgColor'], // Mantener el color del servidor
                     'visible' => $clientCategoria['visible'],
-                    'timestamp' => $clientTimestamp * 1000 // Convertir a milisegundos para la respuesta
+                    'timestamp' => $clientCategoria['timestamp'] // Convertir a milisegundos para la respuesta
                 ];
             } else {
                 // Usar la versión del servidor para la respuesta
@@ -101,7 +69,7 @@ function sincronizarCategorias($categorias, $clientCategorias) {
                     'text' => $serverCategoria['text'],
                     'bgColor' => $serverCategoria['bgColor'],
                     'visible' => $serverCategoria['visible'] ? true : false,
-                    'timestamp' => $serverTimestamp * 1000 // Convertir a milisegundos para la respuesta
+                    'timestamp' => $serverCategoria['timestamp'] // Convertir a milisegundos para la respuesta
                 ];
             }
 
@@ -115,7 +83,7 @@ function sincronizarCategorias($categorias, $clientCategorias) {
                 'text' => $clientCategoria['text'],
                 'bgColor' => $clientCategoria['bgColor'],
                 'visible' => $clientCategoria['visible'],
-                'timestamp' => $clientTimestamp * 1000 // Convertir a milisegundos para la respuesta
+                'timestamp' => $clientCategoria['timestamp'] // Convertir a milisegundos para la respuesta
             ];
         }
     }
@@ -133,7 +101,6 @@ function sincronizarCategorias($categorias, $clientCategorias) {
 
     return $categoriasSync;
 }
-
 /**
  * sincronizarSupermercados
  * Sincroniza los supermercados entre el cliente y el servidor
@@ -145,7 +112,6 @@ function sincronizarCategorias($categorias, $clientCategorias) {
 function sincronizarSupermercados($supermercados, $clientSupermercados) {
     // Obtener supermercados del servidor
     $serverSupermercados = $supermercados->getSupermercados();
-
     // Crear un mapa de supermercados del servidor por ID para facilitar la búsqueda
     $serverSupermercadosMap = [];
     foreach ($serverSupermercados as $supermercado) {
@@ -159,13 +125,19 @@ function sincronizarSupermercados($supermercados, $clientSupermercados) {
     foreach ($clientSupermercados as $clientSupermercado) {
         $id = $clientSupermercado['id'];
 
+        //comprobar si el timestamp es una cadena en formato ISO8601
+        //si es así, convertirlo a timestamp
+        if (is_string($clientSupermercado['timestamp']) && strtotime($clientSupermercado['timestamp']) !== false) {
+            $clientTimestamp= strtotime($clientSupermercado['timestamp']);
+        }
+        else{
         // Convertir el timestamp a segundos si está en milisegundos
         $clientTimestamp = isset($clientSupermercado['timestamp']) ?
             (strlen((string)$clientSupermercado['timestamp']) > 10 ?
                 floor($clientSupermercado['timestamp'] / 1000) :
                 $clientSupermercado['timestamp']) :
             0;
-
+        }
         // Si el supermercado existe en el servidor
         if (isset($serverSupermercadosMap[$id])) {
             $serverSupermercado = $serverSupermercadosMap[$id];
@@ -180,7 +152,7 @@ function sincronizarSupermercados($supermercados, $clientSupermercados) {
                     'logo' => $clientSupermercado['logo'],
                     'visible' => $clientSupermercado['visible'],
                     'order' => $clientSupermercado['order'],
-                    'timestamp' => $clientTimestamp * 1000 // Convertir a milisegundos para la respuesta
+                    'timestamp' => $clientSupermercado['timestamp'] // Convertir a milisegundos para la respuesta
                 ];
             } else {
                 // Usar la versión del servidor para la respuesta
@@ -189,8 +161,8 @@ function sincronizarSupermercados($supermercados, $clientSupermercados) {
                     'text' => $serverSupermercado['text'],
                     'logo' => $serverSupermercado['logo'],
                     'visible' => isset($serverSupermercado['visible']) ? $serverSupermercado['visible'] : true,
-                    'order' => isset($serverSupermercado['order']) ? $serverSupermercado['order'] : 0,
-                    'timestamp' => $serverTimestamp * 1000 // Convertir a milisegundos para la respuesta
+                    'order' => $serverSupermercado['order']?? 0,
+                    'timestamp' => $serverSupermercado['timestamp'] // Convertir a milisegundos para la respuesta
                 ];
             }
 
@@ -205,7 +177,7 @@ function sincronizarSupermercados($supermercados, $clientSupermercados) {
                 'logo' => $clientSupermercado['logo'],
                 'visible' => $clientSupermercado['visible'],
                 'order' => $clientSupermercado['order'],
-                'timestamp' => $clientTimestamp * 1000 // Convertir a milisegundos para la respuesta
+                'timestamp' => $clientSupermercado['timestamp'] // Convertir a milisegundos para la respuesta
             ];
         }
     }
@@ -237,7 +209,7 @@ function sincronizarProductos($productos, $clientProductos) {
     global $user;
     $userId = $user->getId();
 
-    writeLog("Iniciando sincronización de productos para usuario $userId", 'INFO');
+
 
     try {
         // Obtener productos del servidor para este usuario
@@ -253,16 +225,23 @@ function sincronizarProductos($productos, $clientProductos) {
 
         foreach ($clientProductos as $clientProducto) {
             $idProducto = $clientProducto['id'];
-            writeLog("Procesando producto $idProducto", 'DEBUG');
+
 
             try {
                 // Convertir timestamp
+                //comprobar si el timestamp es una cadena en formato ISO8601
+                //si es así, convertirlo a timestamp
+                if (is_string($clientProducto['timestamp']) && strtotime($clientProducto['timestamp']) !== false) {
+                    $clientTimestamp= strtotime($clientProducto['timestamp']);
+                }
+                else{
+
                 $clientTimestamp = isset($clientProducto['timestamp']) ?
                     (strlen((string)$clientProducto['timestamp']) > 10 ?
                         floor($clientProducto['timestamp'] / 1000) :
                         $clientProducto['timestamp']) :
                     0;
-
+                }
                 // Preparar datos del producto
                 $productoData = [
                     'id_producto' => $idProducto,
@@ -273,12 +252,12 @@ function sincronizarProductos($productos, $clientProductos) {
                     'amount' => isset($clientProducto['amount']) ? $clientProducto['amount'] : 1,
                     'selected' => isset($clientProducto['selected']) ? ($clientProducto['selected'] ? 1 : 0) : 0,
                     'done' => isset($clientProducto['done']) ? ($clientProducto['done'] ? 1 : 0) : 0,
-                    'timestamp' => $clientTimestamp
+                    'timestamp' => $clientProducto['timestamp'] // Convertir a milisegundos para la respuesta
                 ];
 
                 // Si existe el producto para este usuario
                 if (isset($serverProductosMap[$idProducto])) {
-                    writeLog("Actualizando producto $idProducto", 'DEBUG');
+
                     $serverProducto = $serverProductosMap[$idProducto];
 
                     // Actualizar producto existente
@@ -292,10 +271,10 @@ function sincronizarProductos($productos, $clientProductos) {
                         'selected' => $clientProducto['selected'],
                         'done' => $clientProducto['done'],
                         'amount' => $clientProducto['amount'],
-                        'timestamp' => $clientTimestamp * 1000
+                        'timestamp' => $clientProducto['timestamp']
                     ];
                 } else {
-                    writeLog("Creando nuevo producto $idProducto", 'DEBUG');
+
                     // Crear nuevo producto con el id_producto del cliente
                     if ($productos->newProducto($productoData)) {
                         $productosSync[] = [
@@ -306,24 +285,16 @@ function sincronizarProductos($productos, $clientProductos) {
                             'selected' => $clientProducto['selected'],
                             'done' => $clientProducto['done'],
                             'amount' => $clientProducto['amount'],
-                            'timestamp' => $clientTimestamp * 1000
+                            'timestamp' => $clientProducto['timestamp']
                         ];
                     } else {
-                        if (function_exists('writeLog')) {
-                            writeLog("Error al crear producto $idProducto", 'ERROR');
-                        } else {
-                            error_log("Error al crear producto $idProducto");
-                        }
+                        $json["error_msg"]="Error al crear producto $idProducto";
                     }
                 }
 
                 unset($serverProductosMap[$idProducto]);
             } catch (Exception $e) {
-                if (function_exists('writeLog') && function_exists('formatException')) {
-                    writeLog("Error procesando producto $idProducto: " . formatException($e));
-                } else {
-                    error_log("Error procesando producto $idProducto: " . $e->getMessage());
-                }
+                $json["error_msg"]="Error procesando producto $idProducto: " . $e->getMessage();
                 continue;
             }
         }
@@ -338,40 +309,24 @@ function sincronizarProductos($productos, $clientProductos) {
                 'selected' => $serverProducto['selected'] ? true : false,
                 'done' => $serverProducto['done'] ? true : false,
                 'amount' => $serverProducto['amount'],
-                'timestamp' => $serverProducto['timestamp'] * 1000
+                'timestamp' => $serverProducto['timestamp']
             ];
         }
 
         return $productosSync;
     } catch (Exception $e) {
-        if (function_exists('writeLog') && function_exists('formatException')) {
-            writeLog("Error general en sincronización: " . formatException($e));
-        } else {
-            error_log("Error general en sincronización: " . $e->getMessage());
-        }
-        throw $e;
+        $json["error_msg"]="Error general en sincronización: " . $e->getMessage();
     }
 }
-
 // Verificar que los datos necesarios estén presentes
 if (!isset($data['token']) || !isset($data['fingerid']) || !isset($data['data'])) {
-    if (function_exists('writeLog')) {
-        writeLog("Faltan datos obligatorios: " . print_r($data, true));
-    } else {
-        error_log("Faltan datos obligatorios para la sincronización: " . print_r($data, true));
-    }
-    $json["error_msg"] = "Faltan datos obligatorios para la sincronización";
+    $json["error_msg"]="Faltan datos obligatorios para la sincronización: " . print_r($data, true);
     return;
 }
 
 // Verificar que el usuario esté autenticado correctamente
 if (!$user->isLoaded()) {
-    if (function_exists('writeLog')) {
-        writeLog("Usuario no autenticado. Token: " . ($data['token'] ?? 'no token'));
-    } else {
-        error_log("Usuario no autenticado. Token: " . ($data['token'] ?? 'no token'));
-    }
-    $json["error_msg"] = $msgerrors["token_error"];
+    $json["error_msg"]="Usuario no autenticado. Token: " . ($data['token'] ?? 'no token');
     return;
 }
 
@@ -424,12 +379,7 @@ try {
     // Devolver los datos sincronizados
     $json["data"] = $responseData;
 } catch (Exception $e) {
-    if (function_exists('writeLog') && function_exists('formatException')) {
-        writeLog(formatException($e));
-    } else {
-        error_log("Error en la sincronización: " . $e->getMessage());
-    }
     $json["error_msg"] = "Error en la sincronización: " . $e->getMessage();
     // Registrar el error para depuración
-    error_log("Error en syncData.inc.php: " . $e->getMessage());
+
 }

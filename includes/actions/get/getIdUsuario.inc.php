@@ -15,9 +15,9 @@
   else
   {
     // Si tenemos fingerid en los datos, lo pasamos junto con el token
-    if(isset($data["finger_id"]))
+    if(isset($data["fingerid"]))
     {
-      $token=["token"=>"$token","finger_id"=>$data["finger_id"]];
+      $token=["token"=>"$token","fingerid"=>$data["fingerid"]];
     }
     $user = new Usuario($token);
     if ($user->getLastResult())

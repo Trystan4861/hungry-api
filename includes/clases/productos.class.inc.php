@@ -23,7 +23,7 @@ class Productos {
     }
     private function setResult($result)
     {
-        if (!is_array($result[0]))
+        if (!isset($result[0]))
         {
             $this->producto=$result;
         }
@@ -118,10 +118,11 @@ class Productos {
         try
         {
             // El timestamp se establece automáticamente con el valor por defecto
-            $consulta = $this->DAO->prepare("INSERT INTO productos (`text`, `fk_id_categoria`, `fk_id_usuario`, `fk_id_supermercado`) VALUES (:text, :fk_categoria, :fk_id_usuario, :fk_id_supermercado)");
+            $consulta = $this->DAO->prepare("INSERT INTO productos (`text`, `id_producto`, `fk_id_categoria`, `fk_id_usuario`, `fk_id_supermercado`) VALUES (:text, :id_producto, :fk_categoria, :fk_id_usuario, :fk_id_supermercado)");
             $consulta->bindValue(":text", $data['text'], PDO::PARAM_STR);
-            $consulta->bindValue(":fk_categoria", $data['id_categoria'], PDO::PARAM_INT);
-            $consulta->bindValue(":fk_id_supermercado", $data['id_supermercado'], PDO::PARAM_INT);
+            $consulta->bindValue(":id_producto", $data['id_producto'], PDO::PARAM_STR);
+            $consulta->bindValue(":fk_categoria", $data['fk_id_categoria'], PDO::PARAM_INT);
+            $consulta->bindValue(":fk_id_supermercado", $data['fk_id_supermercado'], PDO::PARAM_INT);
             $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
             $consulta->execute();
             return $this->loadProducto($this->DAO->lastInsertId());

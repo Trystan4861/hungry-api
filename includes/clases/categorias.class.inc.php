@@ -22,7 +22,7 @@ class Categorias {
     }
     private function setResult($result)
     {
-        if (!is_array($result[0]))
+        if (!isset($result[0]))
         {
             $this->categoria=$result;
         }

@@ -85,7 +85,6 @@ class Usuario {
 
                 if ($usuario) {
                     error_log("Usuario encontrado con ID: " . $usuario["id"] . " y email: " . $usuario["email"]);
-
                     $this->device = 0;
                     if (isset($data["fingerid"])) {
                         try {

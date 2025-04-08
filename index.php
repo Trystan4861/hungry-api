@@ -26,6 +26,7 @@
 	header('Access-Control-Expose-Headers: access-control-allow-credentials, access-control-allow-headers, access-control-allow-methods, access-control-allow-origin, access-control-max-age, content-length, content-type, x-api, x-json, x-php, x-powered-by'); // Exponer los encabezados de la respuesta HTTP a la API.
 	header('Access-Control-Max-Age: 86400'); // 24 horas
 
+
 	// Si es una solicitud OPTIONS, respondemos inmediatamente con un 200 OK
 	if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 		header('Content-Length: 0');
@@ -95,6 +96,8 @@
 		        $params=explode("&",$params); // y generamos un array con los parametros
 			}
 		}
+
+
 		$FTO="includes/actions/$method/$action.inc.php";
 		if (!file_exists($FTO))
 		{
@@ -106,6 +109,7 @@
 		//si el archivo de accion existe, ejecutamos la accion correspondiente, sino mostramos el mensaje de error
 		if (file_exists($FTO))
 		{
+			//si la accion no esta vacía
 			//si la accion no se encuentra en el array de acciones que no necesitan token
 			if(!in_array($action,$NoAuthActions))
 			{
@@ -120,7 +124,7 @@
 				{
 					$categorias= new Categorias($id_usuario);
 					$productos= new Productos($id_usuario);
-					$supermercados= new Supermercados($user->getSupermercadosOcultos());
+					$supermercados= new Supermercados($id_usuario);
 				}
 				//ejecutamos la accion correspondiente
 				require_once $FTO;
