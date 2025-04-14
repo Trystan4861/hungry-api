@@ -54,7 +54,7 @@ class Supermercados{
                 WHERE us.visible = 1 OR us.visible IS NULL
                 ORDER BY COALESCE(us.order, 999999), s.text";
         $consulta = $this->DAO->prepare($sql);
-        $consulta->bindValue(":id_usuario", $id_usuario);
+        $consulta->bindValue(":id_usuario", $id_usuario, PDO::PARAM_INT);
         $consulta->execute();
       }
       // Si no hay filtros, mostramos todos los supermercados
@@ -71,6 +71,36 @@ class Supermercados{
       return $this->returnError($e->getMessage());
     }
   }
+
+  public function updateSupermercadoVisible($id_supermercado,$visible){
+    try {
+      $sql="UPDATE usuarios_supermercados SET visible=:visible WHERE fk_id_supermercado=:id_supermercado and fk_id_usuario=:id_usuario";
+      $consulta = $this->DAO->prepare($sql);
+      $consulta->bindValue(':id_supermercado',$id_supermercado,PDO::PARAM_INT);
+      $consulta->bindValue(':id_usuario',$id_usuario,PDO::PARAM_INT);
+      $consulta->bindValue(':visible',intval($visible),PDO::PARAM_BOOL);
+      return $this->setResult($consulta->execute());
+    }
+    catch(PDOException $e) {
+      return $this->returnError($e->getMessage());
+    }
+  }
+
+  public function updateSupermercadoOrder($id_supermercado,$order){
+    try {
+      $sql="UPDATE usuarios_supermercados SET order=:order WHERE fk_id_supermercado=:id_supermercado and fk_id_usuario=:id_usuario";
+      $consulta = $this->DAO->prepare($sql);
+      $consulta->bindValue(':id_supermercado',$id_supermercado,PDO::PARAM_INT);
+      $consulta->bindValue(':id_usuario',$id_usuario,PDO::PARAM_INT);
+      $consulta->bindValue(':order',intval($order),PDO::PARAM_INT);
+      return $this->setResult($consulta->execute());
+    }
+    catch(PDOException $e) {
+      return $this->returnError($e->getMessage());
+    }
+  }
+
+
   public function getSupermercados(){
     return $this->supermercados;
   }

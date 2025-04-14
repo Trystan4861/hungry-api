@@ -606,7 +606,7 @@ Actualiza un producto existente.
 ```bash
 curl -X POST https://api.hungry.com/updateProducto \
   -H "Content-Type: application/json" \
-  -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_producto":1,"text":"Leche Desnatada","id_categoria":2}'
+  -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_producto":1,"text":"Producto","id_categoria":2}'
 ```
 
 ### Actualizar Nombre de Producto
@@ -861,6 +861,45 @@ Actualiza la visibilidad de un supermercado.
 curl -X POST https://api.hungry.com/updateSupermercadoVisible \
   -H "Content-Type: application/json" \
   -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_supermercado":1,"visible":0}'
-```je": "Producto añadido a la lista correctamente"
+```
+
+### Actualizar Orden de Supermercado
+
+Actualiza el orden de un supermercado.
+
+- **URL**: `/updateSupermercadoOrder`
+- **Método**: `POST`
+- **Autenticación**: Requerida (token JWT)
+
+#### updateSupermercadoOrder - Parámetros
+
+| Nombre         | Tipo   | Requerido | Descripción                |
+|----------------|--------|-----------|----------------------------|
+| token          | string | Sí        | Token de autenticación     |
+| id_supermercado| int    | Sí        | ID del supermercado        |
+| orden          | int    | Sí        | Orden del supermercado     |
+
+#### updateSupermercadoOrder - Respuesta Exitosa (200 OK)
+
+```json
+{
+  "result": true
 }
+```
+
+#### updateSupermercadoOrder - Respuesta de Error
+
+```json
+{
+  "result": false,
+  "error_msg": "No se pudo actualizar el orden del supermercado"
+}
+```
+
+#### updateSupermercadoOrder - Ejemplo de Uso
+
+```bash
+curl -X POST https://api.hungry.com/updateSupermercadoVisible \
+  -H "Content-Type: application/json" \
+  -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_supermercado":1,"visible":0}'
 ```
