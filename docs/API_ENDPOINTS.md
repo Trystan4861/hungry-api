@@ -773,6 +773,46 @@ curl -X POST https://api.hungry.com/updateProductoDone \
   -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_producto":1,"done":1}'
 ```
 
+### Eliminar un Producto
+
+Elimina un producto.
+
+- **URL**: `/deleteProducto`
+- **Método**: `POST`
+- **Autenticación**: Requerida (token JWT)
+
+#### deleteProducto - Parámetros
+
+| Nombre      | Tipo   | Requerido | Descripción                |
+|-------------|--------|-----------|----------------------------|
+| token       | string | Sí        | Token de autenticación     |
+| id_producto | int    | Sí        | ID del producto            |
+
+#### deleteProducto - Respuesta Exitosa (200 OK)
+
+```json
+{
+  "result": true
+}
+```
+
+#### deleteProducto - Respuesta de Error
+
+```json
+{
+  "result": false,
+  "error_msg": "No se pudo eliminar el producto"
+}
+```
+
+#### deleteProducto - Ejemplo de Uso
+
+```bash
+curl -X POST https://api.hungry.com/deleteProducto \
+  -H "Content-Type: application/json" \
+  -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_producto":1}'
+```
+
 ## Supermercados
 
 ### Obtener Supermercados

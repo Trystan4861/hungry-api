@@ -52,6 +52,7 @@
 			"register_error"=>"Hubo un problema al procesar los datos de registro",
 			"no_mail_error"=>"El correo electrónico no está dado de alta en nuestro sistema",
 			"new_product_error"=>"Faltan datos",
+			"delete_product_error"=>"Faltan datos",
 			"product_error"=>"Producto no encontrado",
 			"update_cagegory_error"=>"Faltan datos",
 			"update_product_error"=>"Faltan datos",
