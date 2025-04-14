@@ -133,6 +133,36 @@ class Productos {
         }
     }
     /**
+     * updateProductoText
+     * Actualiza el nombre de un producto
+     * @param int $idProducto ID del producto a actualizar
+     * @param int $text Nuevo nombre
+     * @return mixed Producto actualizado o null en caso de error
+     */
+    public function updateProductoText($idProducto, $text){
+        try
+        {
+            $consulta = $this->DAO->prepare("UPDATE productos SET `amount`=:amount WHERE `id_producto`=:id_producto and `fk_id_usuario`=:fk_id_usuario");
+            $consulta->bindValue(":text", $text, PDO::PARAM_STR);
+            $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
+            $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
+            $consulta->execute();
+
+            // Obtener el id interno del producto actualizado
+            $consulta = $this->DAO->prepare("SELECT `id` FROM productos WHERE `id_producto`=:id_producto AND `fk_id_usuario`=:fk_id_usuario");
+            $consulta->bindValue(":id_producto", $idProducto, PDO::PARAM_INT);
+            $consulta->bindValue(":fk_id_usuario", $this->userId, PDO::PARAM_INT);
+            $consulta->execute();
+            $result = $consulta->fetch(PDO::FETCH_ASSOC);
+
+            return $this->loadProducto($result['id']);
+        }
+        catch(PDOException $e)
+        {
+            return $this->returnError($e->getMessage());
+        }
+    }
+    /**
      * updateProductoAmount
      * Actualiza la cantidad de un producto
      * @param int $idProducto ID del producto a actualizar

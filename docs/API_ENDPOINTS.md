@@ -609,6 +609,47 @@ curl -X POST https://api.hungry.com/updateProducto \
   -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_producto":1,"text":"Leche Desnatada","id_categoria":2}'
 ```
 
+### Actualizar Nombre de Producto
+
+Actualiza El nombre de un producto.
+
+- **URL**: `/updateProductoText`
+- **Método**: `POST`
+- **Autenticación**: Requerida (token JWT)
+
+#### updateProductoText - Parámetros
+
+| Nombre      | Tipo   | Requerido | Descripción                |
+|-------------|--------|-----------|----------------------------|
+| token       | string | Sí        | Token de autenticación     |
+| id_producto | int    | Sí        | ID del producto            |
+| Text        | string | Sí        | Nuevo nombre               |
+
+#### updateProductoText - Respuesta Exitosa (200 OK)
+
+```json
+{
+  "result": true
+}
+```
+
+#### updateProductoText - Respuesta de Error
+
+```json
+{
+  "result": false,
+  "error_msg": "No se pudo actualizar la cantidad del producto"
+}
+```
+
+#### updateProductoText - Ejemplo de Uso
+
+```bash
+curl -X POST https://api.hungry.com/updateProductoText \
+  -H "Content-Type: application/json" \
+  -d '{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...","id_producto":1,"Text":"Nuevo Nombre"}'
+```
+
 ### Actualizar Cantidad de Producto
 
 Actualiza la cantidad de un producto.
